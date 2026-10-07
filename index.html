@@ -1,0 +1,1982 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17385D">
+<meta name="robots" content="noindex,nofollow">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gépnapló">
+<title>Szihalom Worklog</title>
+<style>
+:root{
+  --navy:#17385D; --pale:#D9E2F3; --faint:#F5F7FA; --rule:#C7CCD6;
+  --amber:#FFF2CC; --amber-line:#E0B84A; --ink:#1A3A8F; --red:#B42318; --red-bg:#FDECEA;
+  --green:#1E7B45; --green-bg:#E5F4EA; --grey:#5B6270; --bg:#EEF1F6; --card:#FFFFFF;
+  --sans:Carlito,Calibri,"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --serif:"Noto Serif",Cambria,Georgia,"Times New Roman",serif;
+  --hand:"Segoe Print","Bradley Hand","Comic Sans MS",cursive;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.chk{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;text-align:left;cursor:pointer;font-size:13.5px}
+.chk input{flex:0 0 auto;width:22px;height:22px}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:#1c2230;font:15px/1.45 var(--sans)}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0}
+.chrome{position:sticky;top:0;z-index:20;background:var(--navy);color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.topbar{display:flex;align-items:center;gap:10px;padding:10px 16px 6px;max-width:1100px;margin:0 auto}
+.topbar h1{font-size:17px;font-weight:700;letter-spacing:.2px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar h1 small{font-weight:400;opacity:.75;margin-left:6px;font-size:13px}
+.pill{background:rgba(255,255,255,.14);border-radius:999px;padding:2px 10px;font-size:12.5px;white-space:nowrap}
+.pill.warn{background:var(--amber);color:#5a4300}
+.lang{display:flex;border:1px solid rgba(255,255,255,.4);border-radius:8px;overflow:hidden}
+.lang button{background:none;border:0;color:#fff;padding:4px 9px;font-size:13px;cursor:pointer}
+.lang button.on{background:#fff;color:var(--navy);font-weight:700}
+.tabs{display:flex;max-width:1100px;margin:0 auto;padding:0 8px;overflow-x:auto}
+.tabs button{flex:1 0 auto;background:none;border:0;color:rgba(255,255,255,.75);padding:6px 6px 7px;cursor:pointer;border-bottom:3px solid transparent;font-size:12.5px;display:flex;flex-direction:column;align-items:center;gap:1px}
+.tabs .ti{font-size:19px;line-height:1.1}
+.tabs button.gear{flex:0 0 auto;padding:6px 12px}
+.tabs button.gear .tl{display:none}
+.tabs button.on{color:#fff;border-bottom-color:#fff;font-weight:700}
+main{max-width:1100px;margin:0 auto;padding:14px 16px 80px}
+section[hidden]{display:none}
+.card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:14px;margin:0 0 12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.spacer{flex:1}
+.muted{color:var(--grey)}
+.small{font-size:13px}
+.btn{border:1px solid var(--rule);background:#fff;border-radius:9px;padding:8px 13px;cursor:pointer;min-height:40px;white-space:nowrap}
+.btn:hover{border-color:var(--navy)}
+.btn.primary{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:700}
+.btn.danger{color:var(--red);border-color:#e7b4ae}
+.btn.ghost{border-color:transparent;background:none}
+.btn.sm{min-height:32px;padding:4px 10px;font-size:13.5px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.alert{border-radius:10px;padding:10px 12px;margin:0 0 12px;border:1px solid}
+.alert.warn{background:var(--amber);border-color:var(--amber-line);color:#4d3a00}
+.alert.err{background:var(--red-bg);border-color:#e7b4ae;color:#7a1a10}
+.alert.info{background:var(--pale);border-color:#b7c6e3;color:var(--navy)}
+.alert.ok{background:var(--green-bg);border-color:#a8d5b7;color:#14532d}
+.grouph{font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--navy);margin:18px 2px 8px;font-weight:700;display:flex;gap:8px;align-items:center}
+.grouph .line{flex:1;height:1px;background:var(--rule)}
+/* day screen — big targets for the site crew */
+.today{padding:16px}
+.today.weekend{border-left:6px solid var(--amber-line)}
+.dhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}
+.bigdate{font-size:30px;font-weight:700;color:var(--navy);line-height:1.1}
+.wd{font-size:16px;color:var(--grey)}
+.other{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--grey)}
+.other input{border:1px solid var(--rule);border-radius:8px;padding:6px 8px;min-height:40px;background:#fff}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
+@media (min-width:700px){.tiles{grid-template-columns:repeat(4,1fr)}}
+.tile{border-radius:14px;border:2px solid;overflow:hidden;display:flex;flex-direction:column}
+.tile.on{border-color:var(--green);background:var(--green-bg)}
+.tile.off{border-color:#cfd4dc;background:#f1f2f5}
+.tmain{border:0;background:none;padding:14px 10px;cursor:pointer;display:flex;flex-direction:column;gap:6px;align-items:flex-start;text-align:left;min-height:86px;flex:1}
+.tname{font-weight:700;font-size:16px;line-height:1.2}
+.tstate{font-size:14px;font-weight:700}
+.tile.on .tstate{color:var(--green)} .tile.off .tstate,.tile.off .tname{color:#7a808b}
+.tstep{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #a8d5b7;background:#fff}
+.tstep button{border:0;background:none;font-size:24px;width:48px;height:44px;cursor:pointer;color:var(--green)}
+.tstep b{font-size:15px;white-space:nowrap}
+.btn.huge{width:100%;min-height:60px;font-size:20px;border-radius:14px}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff;font-weight:700}
+.hint{text-align:center;color:var(--grey);font-size:14px;margin:8px 0 4px}
+.done{text-align:center;background:var(--green-bg);color:var(--green);font-size:19px;font-weight:700;border-radius:14px;padding:16px;margin-bottom:8px}
+.row.center{justify-content:center}
+.more{margin-top:14px;border-top:1px dashed var(--rule);padding-top:10px}
+.more summary{cursor:pointer;color:var(--grey)}
+.histh{font-size:14px;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin:20px 2px 8px}
+.hist{display:flex;flex-direction:column;gap:6px}
+.hrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;background:#fff;border:1px solid var(--rule);border-radius:10px;padding:10px 12px;text-align:left;cursor:pointer;min-height:52px}
+.hrow.weekend{border-left:5px solid var(--amber-line)}
+.hrow .hd{min-width:120px} .hrow .hm{flex:1;font-size:14px}
+.sigthumb{height:26px;vertical-align:middle;margin-left:4px}
+@media (max-width:440px){#stagePill{display:none}}
+/* machine pictures */
+.mimg{display:block;position:relative;width:100%;aspect-ratio:120/72;border-radius:10px;overflow:hidden;background:linear-gradient(#eaf2fb,#f7f9fc 70%,#e5e0d4 70%)}
+.mimg svg{display:block;width:100%;height:100%}
+.mimg img{display:block;width:100%;height:100%;object-fit:cover}
+.mimg .mnum{position:absolute;right:6px;top:4px;background:var(--navy);color:#fff;border-radius:6px;padding:0 6px;font-size:13px}
+.tile .mimg{border-radius:0;margin:-14px -10px 6px;width:calc(100% + 20px)}
+.tile.off .mimg{filter:grayscale(1);opacity:.45}
+.mrow .mimg{width:96px;border:1px solid var(--rule)}
+/* calculator */
+.ctiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+@media (min-width:700px){.ctiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.ctile{background:#fff;border:1px solid var(--rule);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px;align-items:stretch;text-align:center}
+.cname{font-weight:700;font-size:15px;line-height:1.2;min-height:2.4em;display:flex;align-items:center;justify-content:center}
+.cstep{display:flex;align-items:center;gap:4px}
+.cstep button{width:40px;height:44px;border-radius:10px;border:1px solid var(--rule);background:var(--faint);font-size:22px;cursor:pointer;color:var(--navy);flex:0 0 auto}
+.cstep input{flex:1;min-width:0;text-align:center;font-size:24px;font-weight:700;color:var(--navy);border:1px solid var(--rule);border-radius:10px;height:44px}
+.crange{width:100%;accent-color:var(--navy)}
+.calcsum .big{font-size:30px;font-weight:700;color:var(--navy);line-height:1.2;margin:2px 0 6px}
+.k{font-size:12.5px;color:var(--grey);text-transform:uppercase;letter-spacing:.5px}
+.mid{font-size:22px;font-weight:700;color:var(--navy);margin-top:2px}
+.card.hl{border:2px solid var(--navy);background:var(--pale)}
+.kinds{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:4px}
+.kind{border:2px solid var(--rule);border-radius:10px;background:#fff;padding:4px;font-size:12px;cursor:pointer;display:flex;flex-direction:column;gap:3px;align-items:stretch}
+.kind.on{border-color:var(--navy);background:var(--pale);font-weight:700}
+.tile.add{border:2px dashed #9fb0cf;background:#fff;align-items:center;justify-content:center;color:var(--navy);font-weight:700;font-size:16px;cursor:pointer;min-height:120px}
+/* PO comparison + extension request */
+.overbox{border:2px solid var(--red);background:#fffafa}
+.ctile .po{font-size:12.5px;color:var(--grey)}
+.ctile .ov{font-size:13px;font-weight:700;color:var(--red);min-height:1.2em}
+.ctile.over{border-color:var(--red)}
+.xdoc-holder{margin:0 0 16px;overflow:hidden}
+.xdoc{width:210mm;min-height:296.5mm;padding:50pt 51pt 64pt;position:relative;background:#fff;color:#000;font-family:var(--serif);font-variant-numeric:lining-nums;font-size:9.6pt;line-height:13.2pt;box-shadow:0 2px 12px rgba(0,0,0,.15);margin:0 auto}
+.xdoc .run{position:absolute;top:28pt;right:51pt;font-weight:700;font-size:8.5pt;color:var(--navy)}
+.xdoc .runrule{position:absolute;top:45pt;left:51pt;right:51pt;border-top:.6pt solid var(--rule)}
+.xdoc .footrule{position:absolute;bottom:52pt;left:51pt;right:51pt;border-top:.6pt solid var(--rule)}
+.xdoc .foot{position:absolute;bottom:36pt;left:51pt;right:51pt;display:flex;justify-content:space-between;font-size:7.6pt;color:#666;line-height:1}
+.xdoc .brand{font-weight:700;font-size:10.5pt;line-height:13.5pt;color:var(--navy);margin-top:6pt}
+.xdoc h1{font-size:17pt;line-height:21pt;color:var(--navy);font-weight:700;margin-top:1pt}
+.xdoc .sub{font-size:10pt;line-height:13pt;color:#666;margin:2pt 0 9pt}
+.xdoc .parties{display:grid;grid-template-columns:1fr 1fr;background:var(--faint);border:.5pt solid var(--rule);border-top:2.2pt solid var(--navy)}
+.xdoc .parties>div{padding:7pt 11pt 8pt}
+.xdoc .parties>div+div{border-left:.5pt solid var(--rule)}
+.xdoc .ph{font-weight:700;font-size:7.6pt;line-height:10.2pt;color:var(--navy);margin-bottom:2pt}
+.xdoc .pn{font-weight:700;font-size:10pt;line-height:13pt;color:var(--navy)}
+.xdoc .pt{font-size:8.4pt;line-height:11.4pt}
+.xdoc table{border-collapse:collapse;width:100%}
+.xdoc table.lab{border:.5pt solid var(--rule);margin-top:7pt}
+.xdoc table.lab td{padding:5pt 8pt;font-size:8.6pt;line-height:11.6pt;vertical-align:middle}
+.xdoc table.lab td.k{background:var(--pale);font-weight:700;color:var(--navy);border-bottom:.5pt solid #fff;text-transform:none;letter-spacing:0;font-size:8.6pt}
+.xdoc h2{font-family:Carlito,Calibri,"Segoe UI",sans-serif;font-weight:700;font-size:11.5pt;line-height:14pt;color:var(--navy);margin:8pt 0 3pt}
+.xdoc p{margin:0 0 4pt}
+.xdoc table.plant{border:.5pt solid var(--rule)}
+.xdoc table.plant th{background:var(--navy);color:#fff;font-weight:700;font-size:8pt;line-height:10.4pt;padding:4pt 5pt;text-align:left}
+.xdoc table.plant td{font-size:8.4pt;line-height:11.2pt;padding:4pt 5pt;border-bottom:.4pt solid var(--rule);vertical-align:middle}
+.xdoc .c{text-align:center}.xdoc .r{text-align:right}.xdoc .b{font-weight:700}
+.xdoc table.plant th.c{text-align:center}.xdoc table.plant th.r{text-align:right}
+.xdoc tr.net td{border-top:.8pt solid var(--navy);background:var(--pale)}
+.xdoc tr.gross td{background:var(--pale)}
+.xdoc .note{font-size:8.2pt;line-height:11pt;color:#666;margin-top:3pt}
+.xdoc .sigs2{display:grid;grid-template-columns:1fr 1fr;gap:30pt;margin-top:8pt;text-align:center}
+.xdoc .sigspace{height:46pt;display:flex;align-items:flex-end;justify-content:center}
+.xdoc .sigspace svg{display:block}
+.xdoc .sigrule{width:150pt;margin:0 auto 2pt;border-top:.6pt solid #000}
+.xdoc .sigrole{font-size:8.5pt;line-height:11.4pt}
+.xdoc .sigwho{font-weight:700;font-size:8.8pt;line-height:11.8pt;color:var(--navy)}
+.xdoc .sigmeta{font-size:7.4pt;line-height:10pt;color:#666}
+/* lock screen */
+body.locked .chrome,body.locked main{display:none}
+.lock{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--navy);padding:16px;z-index:70}
+.lock[hidden]{display:none}
+.lockcard{background:#fff;border-radius:16px;padding:24px 20px;width:min(390px,100%);text-align:center;display:flex;flex-direction:column;gap:14px;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.lockicon{font-size:38px;line-height:1}
+.lockcard h2{color:var(--navy);font-size:20px}
+.lockcard input[type=password]{font-size:28px;letter-spacing:6px;text-align:center;border:2px solid var(--rule);border-radius:12px;padding:10px;min-height:58px}
+.lockerr{color:var(--red);min-height:1.3em;font-weight:700}
+.lockcard.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.lockbtn{background:none;border:0;color:#fff;font-size:18px;cursor:pointer;padding:4px 6px}
+.fixprice{background:var(--green-bg);border:1px solid #a8d5b7;border-radius:10px;padding:10px 12px;font-size:16px}
+.fixprice .k{display:block;margin-bottom:2px}
+/* status */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:12px}
+.stat{background:#fff;border:1px solid var(--rule);border-radius:12px;padding:12px 14px}
+.stat .k{font-size:12.5px;color:var(--grey);text-transform:uppercase;letter-spacing:.5px}
+.stat .v{font-size:24px;font-weight:700;color:var(--navy);line-height:1.2;margin-top:2px}
+.stat .s{font-size:13px;color:var(--grey)}
+.bar{height:14px;border-radius:7px;background:#e3e7ef;overflow:hidden;display:flex;margin:6px 0}
+.bar i{display:block;height:100%}
+.bar .b1{background:var(--navy)} .bar .b2{background:#6d8fc4} .bar .b3{background:var(--red)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--grey)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.t{border-collapse:collapse;width:100%;font-size:14px}
+table.t th{background:var(--navy);color:#fff;text-align:left;padding:7px 9px;font-weight:700;white-space:nowrap}
+table.t td{padding:7px 9px;border-bottom:1px solid var(--rule);vertical-align:top}
+table.t td.n,table.t th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+table.t tr.tot td{background:var(--pale);font-weight:700}
+.fld{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--grey);min-width:0}
+.fld input,.fld select,.fld textarea{border:1px solid var(--rule);border-radius:8px;padding:7px 9px;font-size:15px;color:#1c2230;background:#fff;min-height:40px;width:100%}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.card h2{font-size:16px;color:var(--navy);margin-bottom:10px}
+.card h3{font-size:14.5px;color:var(--navy);margin:12px 0 8px}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:9px;overflow:hidden;background:#fff}
+.seg button{border:0;background:none;padding:8px 12px;cursor:pointer;min-height:40px}
+.seg button.on{background:var(--navy);color:#fff;font-weight:700}
+.sigbox{border:1px solid var(--rule);border-radius:10px;padding:10px;flex:1;min-width:230px;background:var(--faint)}
+.sigbox img,.sigbox svg{max-height:50px;max-width:100%;display:block;margin:4px 0}
+.mpic{display:flex;flex-direction:column;gap:4px;width:110px}
+.mpic .mimg{width:110px}
+.mrow{display:grid;grid-template-columns:110px 1.4fr 1fr 1fr 1fr 1fr 1fr auto;gap:8px;align-items:end;padding:8px 0;border-bottom:1px dashed var(--rule)}
+.lrow{display:grid;grid-template-columns:50px 1.4fr 1.4fr 80px 70px 130px auto;gap:8px;align-items:end;padding:8px 0;border-bottom:1px dashed var(--rule)}
+@media (max-width:760px){.mrow,.lrow{grid-template-columns:1fr 1fr}.mrow>.mpic{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;width:auto;align-items:center}}
+.tests li{margin:2px 0}
+.tests .p{color:var(--green)} .tests .f{color:var(--red);font-weight:700}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(10,20,40,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:12px}
+.modal[hidden]{display:none}
+.mcard{background:#fff;border-radius:14px;padding:16px;width:min(640px,100%);max-height:96vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.mcard h3{color:var(--navy);font-size:18px;margin-bottom:4px}
+.handover{background:var(--amber);border:1px solid var(--amber-line);border-radius:10px;padding:10px 12px;margin:8px 0;font-weight:700;color:#4d3a00}
+.padwrap{position:relative;border:2px dashed #9fb0cf;border-radius:10px;background:#fffef9;margin:10px 0;touch-action:none}
+.padwrap canvas{display:block;width:100%;height:220px;touch-action:none;cursor:crosshair}
+.padwrap .base{position:absolute;left:8%;right:8%;bottom:46px;border-top:1px solid #c5cfdf;pointer-events:none}
+.padwrap .x{position:absolute;left:5%;bottom:48px;color:#9fb0cf;font-size:20px;pointer-events:none}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1c2230;color:#fff;padding:9px 16px;border-radius:9px;z-index:60;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:92vw}
+#toast.on{opacity:1}
+/* documents */
+.docs-out{margin-top:6px}
+.sheet-page{background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.15);margin:0 0 16px}
+.sheet-page svg{display:block;width:100%;height:auto}
+.lb text.f{font-family:Arial,Helvetica,sans-serif;fill:#000}
+.lb text.h{font-family:var(--hand);fill:var(--ink)}
+.lb text.g{font-family:Arial,Helvetica,sans-serif;fill:#555}
+.lb text.b{font-weight:700}
+.lb text.wm{font-family:Arial,sans-serif;font-weight:700;fill:rgba(180,35,24,.13)}
+@page{size:A4;margin:0}
+@page land{size:A4 landscape;margin:0}
+@page port{size:A4 portrait;margin:0}
+@media print{
+  body{background:#fff}
+  .chrome,.no-print,#toast,.modal{display:none!important}
+  main{padding:0;max-width:none}
+  main>section:not(.printing){display:none!important}
+  .docs-out{margin:0}
+  .sheet-page{page:land;width:297mm;height:209.5mm;margin:0;box-shadow:none;break-after:page;overflow:hidden}
+  .sheet-page svg{width:297mm;height:210mm}
+  .xdoc-holder{page:port;margin:0;break-after:page}
+  .xdoc{zoom:1!important;box-shadow:none;margin:0;height:296.5mm;min-height:0;overflow:hidden}
+  .docs-out>:last-child{break-after:auto}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body class="locked">
+<div class="lock" id="lock">
+  <form class="lockcard" id="lockForm" autocomplete="off">
+    <div class="lockicon">🔒</div>
+    <h2>Szihalom munkanapló</h2>
+    <label class="fld">Jelszó / Password<input id="lockPw" type="password" autocomplete="current-password"></label>
+    <label class="chk"><input type="checkbox" id="lockRemember"> Maradjon nyitva ezen a telefonon / Stay unlocked on this device</label>
+    <button class="btn primary huge" type="submit">Belépés / Unlock</button>
+    <div class="lockerr" id="lockErr"></div>
+  </form>
+</div>
+<div class="chrome">
+  <div class="topbar">
+    <h1 id="appTitle">Szihalom</h1>
+    <span class="pill" id="stagePill"></span>
+    <button class="lockbtn" data-a="lock" title="Lezárás / Lock" aria-label="Lock">🔒</button>
+    <div class="lang" role="group" aria-label="Language">
+      <button data-a="lang" data-v="hu">HU</button><button data-a="lang" data-v="en">EN</button>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-a="tab" data-v="days"></button>
+    <button data-a="tab" data-v="calc"></button>
+    <button data-a="tab" data-v="status"></button>
+    <button data-a="tab" data-v="docs"></button>
+    <button data-a="tab" data-v="settings" class="gear"></button>
+  </nav>
+</div>
+<main>
+  <section id="v-days"></section>
+  <section id="v-calc" hidden></section>
+  <section id="v-status" hidden></section>
+  <section id="v-docs" hidden></section>
+  <section id="v-settings" hidden></section>
+</main>
+<div class="modal" id="modal" hidden></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* =========================================================================
+   Szihalom Worklog — single-file app. State lives in localStorage; JSON
+   export/import is the backup path. See PLAN.md for the requirements.
+   ========================================================================= */
+
+const KEY = 'szihalom-worklog-v1';
+const UIKEY = 'szihalom-worklog-ui';
+
+/* ------------------------------------------------------------------ i18n */
+const T = {
+  hu: {
+    shareBtn: 'Küldés az irodának', shareTitle: 'Szihalom munkanapló', shareText: 'Munkanapló – nyissa meg a Szihalom munkanaplóban (Fájl megnyitása).',
+    shareSaved: 'A fájl letöltve – küldje el WhatsAppon vagy e-mailben az irodának.', impOpen: 'Fájl megnyitása',
+    impTitle: 'Munkanapló fájl', impInfo: 'A fájlban {n} nap és {s} szakasz van.', impMerge: 'Hozzáadás a meglévőkhöz',
+    impMergeHint: 'Az új napok és aláírások bekerülnek, a meglévő adatok megmaradnak.', impReplace: 'Teljes csere a fájl tartalmára',
+    mergedTxt: '{a} új nap, {s} új aláírás, {u} frissített nap, {k} ütköző nap (a saját maradt).',
+    badKey: 'Ez a fájl más jelszóval készült – nem nyitható meg.',
+    unreadable: 'A telefonon tárolt adatok más jelszóval készültek – félretettük őket. Importálja a mentést.',
+    amWhich: 'Milyen gép?', amFixed: 'Fix napidíj', amFixedHint: 'A fix árak a Beállításokban módosíthatók.',
+    sPrices: 'Fix napidíjak gépfajtánként', pricesHint: 'Új gép felvételekor ez az ár kerül be automatikusan. A már felvett gépek ára lent, a gépeknél módosítható.',
+    noOver: 'Nincs PO feletti munka – minden belefér a megrendelésbe.', overTitle: 'PO felett – bővítés kell', poDaysCol: 'PO nap', totDaysCol: 'Összes nap',
+    overDaysCol: 'PO felett', rateCol: 'Napidíj', overValCol: 'Érték', notOnPO: 'nincs a PO-ban', newPoTxt: 'Jelenlegi PO: {a} → bővítés után: {b} (nettó).',
+    makeExt: 'PO-bővítési kérelem készítése', extTitle: 'PO-bővítési kérelem', cmpTitle: 'PO ↔ valós munka',
+    extIntro: 'Angol nyelvű kérelem a megrendelő felé: miért és mennyivel kell bővíteni a PO-t. A napokat vegye a ledolgozott napokból vagy a Számolóból, és írja meg az okát.',
+    extUseActual: 'Ledolgozott napokból', extUseCalc: 'A Számoló tervéből', extDate: 'Kelt', extDays: 'Napok gépenként (összesen, a PO-n belüliekkel együtt)',
+    extReason: 'Indoklás (angolul, a megrendelő olvassa)', extReasonHint: 'Ha üresen hagyja, a szürke mintaszöveg kerül a kérelembe.',
+    cInPO: 'PO-n belül', cOverPO: 'PO felett', rateList: 'Napidíjak (ahogy eladtuk)', mRate: 'Napidíj (EUR, nettó)', poN: 'PO: {n} nap', overN: '+{n} nap a PO felett', daysWord1: 'nap',
+    warnOverAll: 'A ledolgozott munka {v} nettóval túllépi a PO-t. Ez a PO bővítéséig nem számlázható – készítsen PO-bővítési kérelmet (Állás fül).',
+    amRateLbl: 'Napidíj, ahogy eladtuk (EUR / nap, nettó)', amOnPO: 'Ez a gép már szerepel a PO-ban (van rá megrendelt összeg)', amNeedRate: 'Adja meg a napidíjat.',
+    tabt_calc: 'Számoló', kind_dozer: 'Dózer', kind_excavator: 'Kotró', kind_tipper: 'Billencs', kind_other: 'Egyéb',
+    calcTitle: '\u{1F9EE} Számoló', calcIntro: 'Állítsa be, hány napot dolgozik az egyes gép – azonnal kiszámolja, mennyi jár érte, mennyi fér bele a PO-ba, és mennyivel kell bővíteni.',
+    presetNow: 'Mostani állás', presetFull: 'Teljes PO ({n} nap)', presetZero: 'Nullázás', ofN: 'nap (max. {n})', daysWord: 'nap',
+    cTotal: 'Ennyi napra összesen', cAlready: 'Már lezárt szakaszok', cNext: 'A következő elszámolás', cRemain: 'Maradna a PO-n',
+    cLess: 'Kevesebb nap, mint ami már le van zárva.', cPerDay: 'Egy nap ára', perMachineDay: '/ gép / nap', allMachinesDay: 'Mind a {n} gép együtt, 1 nap',
+    roundNote: 'A PO szabálya szerint számol: minden sor = PO sorösszeg × nap ÷ napok száma, centre kerekítve – így a végén pontosan a PO összege jön ki.',
+    amTitle: 'Gép hozzáadása', amName: 'Megnevezés (a gépüzemnaplón, angolul)', amNamePh: 'pl. Wheel loader', amPic: 'Kép', amPhoto: 'Fotó', amPhotoOk: 'fotó csatolva',
+    amTotal: 'Megrendelt összeg erre a gépre (EUR, nettó)', amDays: 'Hány napra rendelték', amRateTxt: 'Ez {r} / nap.',
+    amPoNote: 'Ha a gép nincs a PO-ban, minden napja PO feletti munka: a Számoló és az Állás mutatja az összeget, és PO-bővítési kérelmet készíthet róla.',
+    amNeedName: 'Adja meg a gép nevét.', amNeedTotal: 'Adja meg az összeget (0 is lehet, ha még nincs PO).', amNeedDays: 'Adja meg a napok számát.', amAdded: '{n} hozzáadva.',
+    removePhoto: 'Fotó törlése', badPhoto: 'A kép nem olvasható.', lDays: 'Napok',
+    tab_days: '\u{1F4DD} Munkanap', tab_status: '\u{1F4CA} Állás', tab_docs: '\u{1F4C4} Papírok', tab_settings: '\u2699',
+    tabt_days: 'Munkanap', tabt_status: 'Állás', tabt_docs: 'Papírok', tabt_settings: 'Beállítások',
+    worked: 'Dolgozott', idle: 'Állt', saveDay: 'Nap mentése', today: 'ma', otherDay: 'Másik nap', more: 'További adatok (kezdés, megjegyzés, törlés)',
+    history: 'Korábbi napok', signNow: 'Aláírás', signSub: 'Először {a}, utána {b} – ugyanezen a telefonon.', doneSigned: 'Kész – mindkét fél aláírta',
+    savedDay: 'Mentve. Most írják alá.', machinesShort: '{a}/{b} gép', notSaved: 'Koppintson a gépre, ha nem dolgozott. Utána mentés.',
+    missingSig: 'aláírás hiányzik', capFull: 'A PO-n túl dolgoztunk (≈ {v}). Szóljon az irodának – PO-bővítés kell.',
+    daySignedWarn: 'Ezt a napot már aláírták. Módosítás után újra alá kell írni. Folytatja?',
+    app: 'Szihalom munkanapló',
+    addDay: '+ Új nap', noDays: 'Még nincs rögzített munkanap.', machineHours: 'gépóra', daysN: '{n} nap',
+    weekend: 'Hétvége', start: 'Kezdés', note: 'Megjegyzés', hoursHint: 'Gépenként az aznap ledolgozott órák. 0 = a gép állt, arra a napra nem számlázunk.',
+    sign: 'Aláírás', signBoth: 'Mindkét fél aláír', resign: 'Újra aláír', signed: 'aláírva', unsigned: 'nincs aláírva',
+    stale: 'módosult aláírás után', staleLong: 'Az adatok az aláírás óta megváltoztak – az aláírás érvénytelen, újra alá kell írni.',
+    del: 'Törlés', confirmDelDay: 'Biztosan törli a(z) {d} napot?', confirmWeekend: '{d} hétvégére esik ({w}). Valóban dolgoztak ezen a napon (külön megállapodás alapján)?',
+    dupDate: 'Erre a dátumra már van bejegyzés.', inStageWarn: 'Ez a nap már a(z) {n}. szakaszban van. A módosítás érvényteleníti a szakasz aláírásait. Folytatja?',
+    openGroup: 'Nyitott napok – {n}. szakasz (még nem lezárt)', stageGroup: '{n}. szakasz – lezárva {to}-ig',
+    hoursLbl: 'óra', kpDays: 'Ledolgozott napok', kpNet: 'Nettó eddig', kpRemain: 'Maradvány', kpStage: 'Aktuális szakasz',
+    ofDays: '/ {n} nap', poNet: 'PO nettó', certified: 'Igazolt', open: 'Nyitott (nem igazolt)', over: 'PO felett (nem számlázható)', remaining: 'Hátralévő',
+    line: 'PO sor', machine: 'Gép', units: 'db', daysUsed: 'Felhasznált nap', netSoFar: 'Nettó eddig', remDays: 'Hátralévő nap', remNet: 'Hátralévő nettó',
+    stages: 'Szakaszok (elszámolások)', stageNo: 'Szakasz', period: 'Időszak', netc: 'Nettó', vatc: 'ÁFA', gross: 'Bruttó', sigs: 'Aláírások',
+    noStages: 'Még nincs lezárt szakasz.', closeStage: 'Szakasz lezárása', closeUpTo: 'Lezárás eddig a napig (bezárólag)', issueDate: 'Kiállítás dátuma',
+    closeBtn: '{n}. szakasz lezárása', openDaysInfo: '{n} nyitott nap · nettó {net}', noOpen: 'Nincs nyitott (le nem zárt) nap.',
+    warnOver: 'Figyelem: {m} – {x} gépnap a PO {cap} napos keretén felül. Ezeket NEM számlázzuk; a további napokhoz PO-módosítás kell.',
+    warnThird: 'Figyelem: a megrendelő legfeljebb {n} szakaszt fogadott el. A nyitott napok egy {k}. szakaszt igényelnének – egyeztessen, vagy vonja össze az utolsó szakasszal.',
+    warnLastStage: 'Ez lesz az utolsó engedélyezett ({n}.) szakasz, de még {r} nettó maradna a PO-n, amit később már nem lehet igazolni. Folytatja?',
+    warnFirstMin: 'Az első szakasz a megállapodás szerint legalább {n} bérleti nap után jöhet; most {d} nap van benne. Folytatja?',
+    warnExceedStages: 'Ez a(z) {k}. szakasz lenne, a megállapodás legfeljebb {n}. Biztosan lezárja?',
+    stageCreated: '{n}. szakasz lezárva. A dokumentumok a Dokumentumok fülön.', invalidTo: 'Érvénytelen dátum: a lezárás napja a nyitott napok közé kell essen.',
+    docStage: 'Szakasz', draft: 'tervezet', draftLong: 'Tervezet – a nyitott napokból, még nincs lezárva. Nyomtatáskor „TERVEZET / DRAFT” vízjelet kap.',
+    logSheets: 'Gépüzemnaplók', certificate: 'Teljesítésigazolás', both: 'Mindkettő', print: 'Nyomtatás / PDF mentése',
+    langNote: 'A gépüzemnapló mindig magyar űrlap, a kitöltés angolul (ahogy a szeptemberi lapokon). A nyelvváltó csak a felületet érinti.',
+    stageSigs: 'Szakasz aláírásai', stageSigHint: 'Vállalkozó: „kiállító gépkezelő”. Megrendelő: „igazoló munkahelyi vez.” – a gépüzemnapló alján.',
+    stageFields: 'Szakasz adatai', certNo: 'Igazolás száma', logFrom: 'Első gépüzemnapló sorszám', upTo: 'Utolsó nap', delStage: 'Szakasz törlése',
+    confirmDelStage: 'Törli a(z) {n}. szakaszt? A napok megmaradnak, csak újra nyitottak lesznek.', onlyLastDel: 'Csak az utolsó szakasz törölhető.',
+    noDocDays: 'Ebben a szakaszban nincs ledolgozott nap.', signFor: '{p} aláírása', signDay: 'Nap: {d}', signStage: '{n}. szakasz ({p})',
+    signName: 'Aláíró neve', signHint: 'Írjon alá ujjal vagy tollal a keretben.', clear: 'Törlés', cancel: 'Mégse', save: 'Mentés', next: 'Tovább',
+    handover: 'Most adja át a készüléket a(z) {p} képviselőjének.', emptySig: 'Előbb írjon alá a keretben.', needName: 'Adja meg az aláíró nevét.',
+    removeSig: 'Aláírás törlése', confirmRemoveSig: 'Törli ezt az aláírást?',
+    sPO: 'Megrendelés (PO)', poNumber: 'PO szám', poDate: 'PO dátum', project: 'Projekt', site: 'Helyszín (cím)', worksite: 'Munkahely megnevezése (gépüzemnaplón)',
+    rate: 'Árfolyam (HUF/EUR)', totalDays: 'Napok a PO-ban', vatRate: 'ÁFA kulcs (%)', maxStages: 'Max. szakasz', minFirst: 'Min. nap az 1. szakaszhoz', baseHours: 'Alapóra / nap',
+    sLines: 'PO sorok', lNo: 'Sor', lHu: 'Név (HU)', lEn: 'Név (EN)', lCert: 'Leírás a teljesítésigazoláson', lUnits: 'Darab', lTotal: 'PO sor összeg (EUR)', addLine: '+ PO sor',
+    sMachines: 'Gépek (gépenként egy gépüzemnapló)', mName: 'Megnevezés (lapon, angolul)', mLine: 'PO sor', mType: 'Géptípus', mInv: 'Lelt. szám', mOp: 'Gépkezelő neve', addMachine: '+ Gép',
+    unitsMismatch: 'A(z) „{l}” PO sor {u} darabos, de {m} gép tartozik hozzá.', delete: 'Törlés', confirmDelLine: 'Törli ezt a PO sort?', confirmDelMachine: 'Törli ezt a gépet? A rögzített órái nem jelennek meg többé.',
+    sParties: 'Felek', contractor: 'Vállalkozó', client: 'Megrendelő', pName: 'Név', pAddr: 'Cím', pAddr2: 'Cím 2. sor', pVat: 'Közösségi adószám', pTax: 'Adószám (HU)', pVendor: 'Szállítói kód', pEmail: 'E-mail',
+    sDocs: 'Számozás', logPrefix: 'Gépüzemnapló előtag', certPrefix: 'Igazolás előtag',
+    sData: 'Adatok', exportBtn: 'Mentés fájlba (titkosított)', importBtn: 'Fájl megnyitása', resetBtn: 'Visszaállítás a kezdő adatokra',
+    confirmImport: 'Az importált fájl FELÜLÍRJA a jelenlegi adatokat ({n} nap, {s} szakasz). Folytatja?', badImport: 'A fájl nem érvényes munkanapló-export.',
+    confirmReset: 'Minden adat törlődik, és visszaáll a kezdő állapot. Előtte exportáljon! Folytatja?',
+    imported: 'Importálva.', exported: 'Exportálva.', storageNote: 'Az adatok csak ezen az eszközön tárolódnak. A telefonok a „Küldés az irodának” gombbal küldik el a napokat és aláírásokat; az iroda a „Fájl megnyitása” → „Hozzáadás” lépéssel fésüli össze. A fájlok a jelszóval titkosítottak.',
+    selfTest: 'Önellenőrzés (pénzügyi számítás)', allPass: 'Minden ellenőrzés sikeres.', someFail: 'HIBA az önellenőrzésben!', saveFail: 'Mentés sikertelen (tárhely?). Exportáljon most!',
+    huf: 'Ft', stageOf: '{k}. / {n}', stageOver: '{k}. (keret: {n})', stagePill: '{k}. szakasz · {n} nyitott nap', allCertified: 'Minden nap igazolva', lineDays: '{d}/{t} nap',
+    signedBy: '{n}, {d}', dayTot: '{h} gépóra', daysCol: 'Nap',
+  },
+  en: {
+    shareBtn: 'Send to office', shareTitle: 'Szihalom worklog', shareText: 'Worklog — open it in the Szihalom worklog app (Open file).',
+    shareSaved: 'File downloaded — send it to the office by WhatsApp or e-mail.', impOpen: 'Open file',
+    impTitle: 'Worklog file', impInfo: 'The file holds {n} days and {s} stages.', impMerge: 'Add to my data',
+    impMergeHint: 'New days and signatures are added; what is already here stays.', impReplace: 'Replace everything with the file',
+    mergedTxt: '{a} new days, {s} new signatures, {u} days updated, {k} conflicting days (yours kept).',
+    badKey: 'This file was made with a different password — it cannot be opened.',
+    unreadable: 'The data stored on this phone was saved under another password — it has been kept aside. Import your backup.',
+    amWhich: 'Which machine?', amFixed: 'Fixed daily price', amFixedHint: 'Fixed prices can be changed in Settings.',
+    sPrices: 'Fixed daily prices per machine type', pricesHint: 'A new machine gets this price automatically. Machines already added keep theirs; change them below.',
+    noOver: 'No work beyond the PO — everything fits the order.', overTitle: 'Beyond the PO — extension needed', poDaysCol: 'PO days', totDaysCol: 'Total days',
+    overDaysCol: 'Beyond PO', rateCol: 'Daily rate', overValCol: 'Value', notOnPO: 'not on the PO', newPoTxt: 'Current PO: {a} → after extension: {b} (net).',
+    makeExt: 'Make a PO extension request', extTitle: 'PO extension request', cmpTitle: 'PO ↔ actual work',
+    extIntro: 'An English request to the client: why and by how much the PO must be extended. Take the days from the days worked or from the Calculator, and write the reason.',
+    extUseActual: 'From days worked', extUseCalc: 'From the Calculator plan', extDate: 'Date', extDays: 'Days per machine (total, including those within the PO)',
+    extReason: 'Reason (English, the client reads it)', extReasonHint: 'Leave empty to use the grey sample text.',
+    cInPO: 'Within the PO', cOverPO: 'Beyond the PO', rateList: 'Daily rates (as sold)', mRate: 'Daily rate (EUR, net)', poN: 'PO: {n} days', overN: '+{n} days beyond the PO', daysWord1: 'day',
+    warnOverAll: 'Work done exceeds the PO by {v} net. It cannot be invoiced until the PO is extended — make a PO extension request (Status tab).',
+    amRateLbl: 'Daily rate as sold (EUR / day, net)', amOnPO: 'This machine is already on the PO (it has an ordered amount)', amNeedRate: 'Enter the daily rate.',
+    tabt_calc: 'Calculator', kind_dozer: 'Dozer', kind_excavator: 'Excavator', kind_tipper: 'Tipper', kind_other: 'Other',
+    calcTitle: '\u{1F9EE} Calculator', calcIntro: 'Set how many days each machine works — it instantly counts what is due, how much fits the PO and how much the PO must be extended.',
+    presetNow: 'Current state', presetFull: 'Full PO ({n} days)', presetZero: 'Reset', ofN: 'days (max. {n})', daysWord: 'days',
+    cTotal: 'Total for these days', cAlready: 'Already closed stages', cNext: 'Next billing', cRemain: 'Would remain on the PO',
+    cLess: 'Fewer days than already closed.', cPerDay: 'Price of one day', perMachineDay: '/ machine / day', allMachinesDay: 'All {n} machines together, 1 day',
+    roundNote: 'Uses the PO rule: each line = PO line total × days ÷ days ordered, rounded to the cent — so it ends exactly on the PO total.',
+    amTitle: 'Add machine', amName: 'Name (on the log sheet, English)', amNamePh: 'e.g. Wheel loader', amPic: 'Picture', amPhoto: 'Photo', amPhotoOk: 'photo attached',
+    amTotal: 'Amount ordered for this machine (EUR, net)', amDays: 'Days ordered', amRateTxt: 'That is {r} / day.',
+    amPoNote: 'If the machine is not on the PO, all its days are work beyond the PO: the Calculator and Status show the amount, and you can make a PO extension request for it.',
+    amNeedName: 'Enter the machine name.', amNeedTotal: 'Enter the amount (0 is fine if there is no PO yet).', amNeedDays: 'Enter the number of days.', amAdded: '{n} added.',
+    removePhoto: 'Remove photo', badPhoto: 'The image could not be read.', lDays: 'Days',
+    tab_days: '\u{1F4DD} Workday', tab_status: '\u{1F4CA} Status', tab_docs: '\u{1F4C4} Documents', tab_settings: '\u2699',
+    tabt_days: 'Workday', tabt_status: 'Status', tabt_docs: 'Documents', tabt_settings: 'Settings',
+    worked: 'Worked', idle: 'Idle', saveDay: 'Save day', today: 'today', otherDay: 'Other day', more: 'More (start time, note, delete)',
+    history: 'Earlier days', signNow: 'Sign', signSub: 'First {a}, then {b} — on this same phone.', doneSigned: 'Done — both parties signed',
+    savedDay: 'Saved. Now sign it.', machinesShort: '{a}/{b} machines', notSaved: 'Tap a machine if it did not work. Then save.',
+    missingSig: 'signature missing', capFull: 'We have worked beyond the PO (≈ {v}). Tell the office — a PO extension is needed.',
+    daySignedWarn: 'This day is already signed. After a change it must be signed again. Continue?',
+    app: 'Szihalom worklog',
+    addDay: '+ Add day', noDays: 'No working days recorded yet.', machineHours: 'machine hours', daysN: '{n} days',
+    weekend: 'Weekend', start: 'Start', note: 'Note', hoursHint: 'Hours worked per machine that day. 0 = machine stood idle and is not billed for that day.',
+    sign: 'Sign', signBoth: 'Both parties sign', resign: 'Re-sign', signed: 'signed', unsigned: 'not signed',
+    stale: 'changed after signing', staleLong: 'The data changed after signing — the signature is void and must be given again.',
+    del: 'Delete', confirmDelDay: 'Delete {d}?', confirmWeekend: '{d} is a weekend day ({w}). Was it really worked (by agreement)?',
+    dupDate: 'There is already an entry for that date.', inStageWarn: 'This day belongs to stage {n}. Changing it voids that stage’s signatures. Continue?',
+    openGroup: 'Open days — stage {n} (not yet closed)', stageGroup: 'Stage {n} — closed up to {to}',
+    hoursLbl: 'h', kpDays: 'Days worked', kpNet: 'Net so far', kpRemain: 'Remaining', kpStage: 'Current stage',
+    ofDays: 'of {n} days', poNet: 'PO net', certified: 'Certified', open: 'Open (not certified)', over: 'Beyond PO (not billable)', remaining: 'Remaining',
+    line: 'PO line', machine: 'Machine', units: 'units', daysUsed: 'Days used', netSoFar: 'Net so far', remDays: 'Days left', remNet: 'Net left',
+    stages: 'Stages (billing)', stageNo: 'Stage', period: 'Period', netc: 'Net', vatc: 'VAT', gross: 'Gross', sigs: 'Signatures',
+    noStages: 'No stage closed yet.', closeStage: 'Close a stage', closeUpTo: 'Close up to and including', issueDate: 'Issue date',
+    closeBtn: 'Close stage {n}', openDaysInfo: '{n} open days · net {net}', noOpen: 'No open (uncertified) days.',
+    warnOver: 'Warning: {m} — {x} machine-days beyond the PO’s {cap} days. These are NOT billed; further days need a PO amendment.',
+    warnThird: 'Warning: the client agreed to at most {n} stages. The open days would need stage {k} — agree it with the client or fold them into the last stage.',
+    warnLastStage: 'This is the last allowed stage ({n}), yet {r} net would remain on the PO and could not be certified later. Continue?',
+    warnFirstMin: 'By agreement the first stage comes after at least {n} rental days; it currently has {d}. Continue?',
+    warnExceedStages: 'This would be stage {k}; the agreement allows at most {n}. Close it anyway?',
+    stageCreated: 'Stage {n} closed. Documents are on the Documents tab.', invalidTo: 'Invalid date: the closing day must fall among the open days.',
+    docStage: 'Stage', draft: 'draft', draftLong: 'Draft — built from the open days, not yet closed. Prints with a “TERVEZET / DRAFT” watermark.',
+    logSheets: 'Plant log sheets', certificate: 'Performance certificate', both: 'Both', print: 'Print / save as PDF',
+    langNote: 'The plant log sheet (gépüzemnapló) is always the Hungarian form with English entries, as on the September sheets. The language switch only changes the app.',
+    stageSigs: 'Stage signatures', stageSigHint: 'Contractor: “kiállító gépkezelő”. Client: “igazoló munkahelyi vez.” — at the foot of the log sheet.',
+    stageFields: 'Stage details', certNo: 'Certificate no.', logFrom: 'First log sheet number', upTo: 'Last day', delStage: 'Delete stage',
+    confirmDelStage: 'Delete stage {n}? The days are kept and become open again.', onlyLastDel: 'Only the last stage can be deleted.',
+    noDocDays: 'No working days in this stage.', signFor: '{p} signature', signDay: 'Day: {d}', signStage: 'Stage {n} ({p})',
+    signName: 'Signer’s name', signHint: 'Sign with a finger or stylus inside the box.', clear: 'Clear', cancel: 'Cancel', save: 'Save', next: 'Next',
+    handover: 'Now hand the device to the {p} representative.', emptySig: 'Please sign inside the box first.', needName: 'Enter the signer’s name.',
+    removeSig: 'Remove signature', confirmRemoveSig: 'Remove this signature?',
+    sPO: 'Purchase order', poNumber: 'PO number', poDate: 'PO date', project: 'Project', site: 'Site (address)', worksite: 'Work place name (on log sheet)',
+    rate: 'Exchange rate (HUF/EUR)', totalDays: 'Days in PO', vatRate: 'VAT rate (%)', maxStages: 'Max. stages', minFirst: 'Min. days for stage 1', baseHours: 'Base hours / day',
+    sLines: 'PO lines', lNo: 'Line', lHu: 'Name (HU)', lEn: 'Name (EN)', lCert: 'Description on certificate', lUnits: 'Units', lTotal: 'PO line total (EUR)', addLine: '+ PO line',
+    sMachines: 'Machines (one log sheet each)', mName: 'Name (on sheet, English)', mLine: 'PO line', mType: 'Machine type', mInv: 'Inventory no.', mOp: 'Operator name', addMachine: '+ Machine',
+    unitsMismatch: 'PO line “{l}” has {u} units but {m} machines are assigned to it.', delete: 'Delete', confirmDelLine: 'Delete this PO line?', confirmDelMachine: 'Delete this machine? Its recorded hours will no longer show.',
+    sParties: 'Parties', contractor: 'Contractor', client: 'Client', pName: 'Name', pAddr: 'Address', pAddr2: 'Address line 2', pVat: 'VAT no.', pTax: 'Tax no. (HU)', pVendor: 'Vendor code', pEmail: 'E-mail',
+    sDocs: 'Numbering', logPrefix: 'Log sheet prefix', certPrefix: 'Certificate prefix',
+    sData: 'Data', exportBtn: 'Backup to file (encrypted)', importBtn: 'Open file', resetBtn: 'Reset to seed data',
+    confirmImport: 'The imported file REPLACES the current data ({n} days, {s} stages). Continue?', badImport: 'This file is not a valid worklog export.',
+    confirmReset: 'All data will be erased and the starting data restored. Export first! Continue?',
+    imported: 'Imported.', exported: 'Exported.', storageNote: 'Data is stored only on this device. Phones send their days and signatures with “Send to office”; the office merges them with “Open file” → “Add to my data”. Files are encrypted with the password.',
+    selfTest: 'Self-check (money arithmetic)', allPass: 'All checks passed.', someFail: 'SELF-CHECK FAILED!', saveFail: 'Saving failed (storage full?). Export now!',
+    huf: 'HUF', stageOf: '{k} of {n}', stageOver: '{k} (limit {n})', stagePill: 'Stage {k} · {n} open days', allCertified: 'All days certified', lineDays: '{d}/{t} days',
+    signedBy: '{n}, {d}', dayTot: '{h} machine hours', daysCol: 'Days',
+  }
+};
+const TAB_ICON = { days: '\u{1F4DD}', calc: '\u{1F9EE}', status: '\u{1F4CA}', docs: '\u{1F4C4}', settings: '\u2699\uFE0F' };
+const WD = {
+  hu: ['vasárnap', 'hétfő', 'kedd', 'szerda', 'csütörtök', 'péntek', 'szombat'],
+  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+};
+const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+function t(k, v) {
+  let s = (T[S.lang] && T[S.lang][k]) ?? T.en[k] ?? k;
+  if (v) for (const [a, b] of Object.entries(v)) s = s.split('{' + a + '}').join(b);
+  return s;
+}
+
+/* --------------------------------------------------------------- helpers */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+const pad2 = n => String(n).padStart(2, '0');
+const parseD = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const isoD = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const todayIso = () => isoD(new Date());
+const dow = s => parseD(s).getDay();
+const isWeekend = s => { const w = dow(s); return w === 0 || w === 6; };
+const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
+function addDays(s, n) { const d = parseD(s); d.setDate(d.getDate() + n); return isoD(d); }
+function enLong(s) { const d = parseD(s); return `${d.getDate()} ${MONTHS_EN[d.getMonth()]} ${d.getFullYear()}`; }
+function enPeriod(a, b) {
+  if (!a) return '';
+  if (a === b) return enLong(a);
+  const A = parseD(a), B = parseD(b);
+  if (A.getFullYear() !== B.getFullYear()) return `${enLong(a)} – ${enLong(b)}`;
+  if (A.getMonth() === B.getMonth()) return `${A.getDate()}–${B.getDate()} ${MONTHS_EN[B.getMonth()]} ${B.getFullYear()}`;
+  return `${A.getDate()} ${MONTHS_EN[A.getMonth()]} – ${enLong(b)}`;
+}
+function uiDate(s) {
+  if (!s) return '';
+  const d = parseD(s);
+  return S.lang === 'hu' ? `${d.getFullYear()}. ${pad2(d.getMonth() + 1)}. ${pad2(d.getDate())}.` : enLong(s);
+}
+const wdName = s => WD[S.lang][dow(s)];
+/* money is integer cents throughout */
+const toCents = x => Math.round(Number(x) * 100);
+const fmtEN = c => (c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtUI = c => (c / 100).toLocaleString(S.lang === 'hu' ? 'hu-HU' : 'en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' EUR';
+const fmtHUF = c => Math.round(c / 100 * S.po.rate).toLocaleString(S.lang === 'hu' ? 'hu-HU' : 'en-GB') + ' ' + t('huf');
+const fmtNum = n => (Math.round(n * 100) / 100).toLocaleString(S.lang === 'hu' ? 'hu-HU' : 'en-GB');
+const fmtDaysEN = n => String(Math.round(n * 100) / 100);
+const hNum = n => String(Math.round(n * 100) / 100).replace('.', ',');
+function clock(h) { const hh = Math.floor(h), mm = Math.round((h - hh) * 60); return mm ? `${hh}:${pad2(mm)}` : String(hh); }
+
+/* ----------------------------------------------------------------- seed */
+function seed() { return clone(SEED); }          // the starting data lives in the encrypted vault
+
+/* ------------------------------------------------------- state & storage */
+let S;
+let UI = { tab: 'days', docStage: null, docKind: 'both', sel: null, draft: null };
+function normalize(o) {
+  const b = seed();
+  const s = Object.assign({}, b, o);
+  s.po = Object.assign({}, b.po, o.po || {});
+  s.parties = { contractor: Object.assign({}, b.parties.contractor, o.parties?.contractor), client: Object.assign({}, b.parties.client, o.parties?.client) };
+  s.numbering = Object.assign({}, b.numbering, o.numbering);
+  s.signers = Object.assign({}, b.signers, o.signers);
+  s.prices = Object.assign({}, b.prices, o.prices);
+  const KIND_BY_LINE = { dozer: 'dozer', exc: 'excavator', tip: 'tipper' };
+  s.machines = (o.machines || b.machines).map(m => ({ type: '', inv: '', operator: '', ...m, kind: m.kind || KIND_BY_LINE[m.line] || 'other' }));
+  s.machines.forEach(m => { if (m.rate === undefined || m.rate === '') m.rate = defaultRate(s, m); });
+  s.ext = Object.assign({ plan: {}, reason: '', date: '', sig: {} }, o.ext);
+  s.days = (o.days || []).map(d => ({ date: d.date, start: Number(d.start ?? 7), note: d.note || '', hours: d.hours || {}, sig: d.sig || {} }));
+  s.stages = (o.stages || []).map((x, i) => ({ no: i + 1, to: x.to, issued: x.issued || x.to, certNo: x.certNo || '', logFrom: Number(x.logFrom || 1), sig: x.sig || {} }));
+  sortAll(s);
+  return s;
+}
+function sortAll(s) {
+  s.days.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+  s.stages.sort((a, b) => a.to < b.to ? -1 : 1);
+  s.stages.forEach((x, i) => x.no = i + 1);
+}
+/* ================================================================== VAULT
+   The business data (PO, prices, parties, seed days) ships encrypted —
+   AES-256-GCM, key from the password via PBKDF2-SHA-256 — and what is saved
+   on the device is encrypted with the same key. tools/build-vault.mjs
+   writes the vault; without the password this file holds no figures. */
+const VAULT = /*VAULT*/{"salt":"IACnKUX11XTsA8XypA1jJQ==","iter":600000,"iv":"DRsjFLOBE6DDfRcK","ct":"yIHJrn7uCeRB/w6dp6w9V6/+4maeM5M+kcuwheOxgZjzStsunbBOuo+qz7tD22iznP1ldx4zPliPr4fX8Yi3WuvQ7At1hQ+vvMzl0cPewN000ucW8Kh+elytdCE9epew406hepl/PB2TEh/K1pQC8aHgaRrkxBHFpcAymtYE+h0dZi64J20fi94fvXpwrelO2n3rze5ZjOFZbeKW/Ff5dKGX1A+PE9HZejhZ/Xy94dGWN7wxoAwklbsgzXNSjPer4QowOQT2A9Eu//5JrSQkV9eTJG0WNm7kSP4QQU7HT1f0FMbgwlSgobhU3uDnktifjWc9u6fv8P432+YrV8+RX11w0T7VkagVdSy9qdlqlS7LUHqaKOwwSvxT6tS3rj6UI08WL9UwVxJYGFV7L6UDsS+X4+tr18R/VcS/tptvISHgNZCJ9cgvpxJ7SuUI1CzAoLe34UARebPPhG6Jx/u1uwyk7kBIVvCa5hSnl0dNLcCe9mGQvxXEdTu2xYBLZn55NPRY8ha0lprqlnzUaneMzfcfh4lKzMJ4LW/j8o4AgiLtusjEDDcz2hlGKJHFEEKQ/E5cCPaTwIt2jkvRPhWq1JiGBUWEuSTkmGYIgcGxySij4q9R0VeiHx39zdZGAyQzjzqI/ps+D1H4Ugy1yA46RC8UxQVKLb86x+eel7SXqVV39wLeQWhdqDiRi4rlewq8vbehssXQwKup9a1dv1CY+x5AhFmkJxLIGvd1GUw5d2Hn+LLpA32OKLL4G3zvOTeTdoC1snwZjxKTrUeG2IVuJTUhiQ8l40Ve9koWBbNW+fpNbwXlDWx+qfzAGQvQ4sOlXAWMMGrf/FvIVo+UuHAQhpJQs6OO9Jnw5y8oEJkZVCWeQy98Uhu6l/ebdVfW7Y0JqCKTRd/QqLhFZOEIhVohB3jpbygCAhC25Y3fJbcQ75pTJaO3tpG19uCLWrnIUclRLlpuWM+3fzlU5hddr9OYuO1zmyuPOcdVVjwzxiE1sn4CRPJBbYwSTFwk3NxGOMJM5RRe2DQWpP8jDxG+BsR8IeQQGlFw/JEEJCkSACpPjXW4F90962Y5ajm65zDuMLaYMP9flwzb6mavajvu+g6Z5dobGZcB2IZi+J8cnEP3ACO5d42rk+Zon7C7KLNzCIXjy4816O+c2xXrXJEgOgspolkPcbOsWwuLpFmkr5i43ITx8SO62PiZ5SM+2Ol0pdVQeZjlULwMwR4C0NZV1mVOjLbqwk6mWxocPI2cFStdu4iJr4TqTjGgjdxiNu+CMaROVPB+1Qq4sMwx26A2eNeLbIGnnG50nzk/jw+9wS6EKGT54edA11N+xoX9iNtolmwS8jOtjQloQ0Jrc028joX4s/rslmJDcZOjStbh2KreAF+aZuNj3VlHn3Q/uJjOzHLmzJMThaOERjwDnd5iyII6QoPf8X4Zd1Dn4FhJeuZdkBF1+51qodOAAJ0idvKfCMWlBlePf+z0D/U4ffeHwg0cWXJ6pSSjD/7YTeHdsKbmKwkByDV3JDe2Bmlht6PvR+mPRxNVSHeK4j+tWXidDYNMkaYbjVrgtzpYxKMKew4ztcdHAwUJSLvit6P5OmqzjH7h4/ho8A+eM3N5pc2t0pnl2lnmjc0eAAhSn8VztPxE22a0iHctGlayTvY9rNjDxSSMZ5n10diQtxQkdeOwaGxoKQXsPnT1ui5hMVsqcCJkEqyTK9IZgAjIcR7CxOOYnZfDMb6ShHyRYzuwVRTiETMyLo7Zki27EyqEtFzeH9vjAjugZf0J5pAP3O/s2xG8ee0Stihwqe5SferwxsQ3iNKTItia6JNbk1d55aOR69+cqWcQ87HGagN9CIFss00owozve3TdKl2arA/Y6Rk/7lVOG91u2/X0zhUzalp7r2hJ5Hia/dsZQEpF5p5q2YEXrcOmpQCsqRyYpSXGyYPD3oukhbdGmRLgaSGdm4y3BfHsWtPQ0dPxLljsYmXHV9B8cjLc1ZghfuKIjJdGke/AFgtRe+Pm74oQkN390GX/UXSII0hEflTWsgFvkdxYEV5UtFZqTIERqKsYAWIFvT+Tz1pDVAwi2HANMPT0JZDyXQ06+rCcRSDVMW1rQdZaXwjJv5DRKoIh1/eGFC6DVHTlKj/wlT/g/qJ68IZwd8ESE8xJE8howUeoscnUTEuU6mCOlLkkZ43f1AwV2ElXZq6OO2mnh4AFnrkh7RW90RybdgQoaWV7zKbx3krT4Rqr2AFyNfpBPcQu1MAH3Oe4r8Pdf4XNdiRP/427uLgbtM7zRG1/XR7dEd2LX62yOwyhzRoWva4ebDKsGsgEllHUjU0/JjVFfeJku+Bf7XhetRNmn+5gQatO7oubAVD0xAgLZzECXcUzVyJ88g7Kc0i1+rQo48ITaCF7VfVlnrKhNmx+CB4HUB+TDqZdmWT3q0YLcGVAzPKaQtYv4RPVHDxWLd5evT4A/8X1HX3eCAqeElJe2PcvsJ4Af1XgEOrTy+RazQSBQXXvVj9C00LRy5tKV6RfoRfQFJ8rd02Ur5k3DNPEbyFQG7cTPo9Q7WaoBcPaDjXx53+3vSlpDNIcbLYRPHwaWDaRjeVESH8QC1STLGd2g4H8obcCmfqJZSlPC9cAZXp87rT9WVBGWeJUQVkhuU7gdW9ZWevEnfA+lSyaQGvTjf4K4GEvhd6gyV6VAweCljuE0P9+DjnefWc1iPmM5fN+M+I5pbmw2gInnp4YwMIJc87LlTLiw+74Ki8xSfjylFqX3GV+hq+0y5PwGxbfNbiHjKX3EOfybdW7JQJojzydKNoDY+u28wL7sswmFKEey79ysuXPNkCpo90PE9KXh7nQmOgjk1CJ5NIxPIQN6q5wYCSURwguAMbRqYUYqjqqiA1/VF7XLWCL/wvV2GWAXXA4RYXAQ+z5oR9Ij+hUW1Js8s6yIxDWa3NP0frRmyJPQv4cj5EFzKXi6IryAvwymizo7z24XKkj5jqMP7IjaTnWtS6T0ppKpnTi0SJAwo/4Pgc4jy8cRG2Jn8MU7pObdIRHXVT0F5hJsvKB3RUmZhYUWSDIrcXjhkMd5j4OW1u9smRZwexp7kxFFMb7iqbdzN8vgczTTz4QnOP1e8qnDwfWRhrjkBKuWeMHKGZJdO7UIIO0+7QEJm6hcOP/+n/FvNMURJsPxFGN6nbgexdGOlWYWb5nSxwOdUhlv5Ytyic8Mnqx7DS4j+gwc+aijtvCen/SpA3aXz2FxTxhT6x71MtE01jjBQWr8V64QtRvT3wDEX96/St/T7RTOt+gW2iVeUWX8U/AvCgi39M+D9WnzYS00DzrCcJkS3jVvizR1V33wDMQBjy2gNm9bjc9abDj0Cq+RzR3uC+FkYDrEE2+7NPi1cdg1TDbV6F0barD/ASdvBW7uR2m9Kzw6/mg+06dY5cN6JRFGNySWK6G1HYRQd4X1KW3tRonlNDD2XzILk3lUmdxMt0q8/P6iSAXPoNEDmLZGqQ9Bhv5+5CGrU2FOoMuKkWInUtbe8YrmFHOPRsRbYDLNYJpviLCbyq6Ba4GHjSZFLDu4gEM2SZgaftY6tu4RwUqHM2jYUVQF8Xjwgru/65KwYqtzuQAZ6tasKgScHw/TKo21hJcoBwdqYREZKGias2xh2p48fNH4jYJPJ/jGBAl87Asz5VfbM90q0HUEDttzsSI8gTKWS5cH6IvjUh9bRrRjWE+zB3CR6kBUSp7kw47R9WqeeUpE7AHHrOuYhUfRs+bH7d0DYiKdHsjsK76fwrvcp4uMxblH9nQPt7c4w9tXO9qBiXXjJ1LSnF3YJ5/p11jEZHpWA+IfoTbg5ptYxMLH7SovlfyWPDPG6zEwXatY/SqVuvIYcxt6yXuN4zgnq0YEDnrM99GaEJ6utU1iHf2vu1K+60YXYu5yqgyRjnxRICrZYJKoSuuRTYCb6tid12AA8cAqNXmVQQI8jGEWOEVgYaWz9lJJwPl7xWSYnRnt8j7CFqnrvUmv8SBdId/JYexapoi+eMgpczS4mh1wOyuvjFtREoHsdXkuYhhCveaYL3Gj/zXDPAzYvo8VV26aXdsSQGwpkPWnyVpjh6xuualqaCz9G74lMsTxcWPDbDbMpF7YHg31g9dNNhk5jANa9R1vay+MMzEmynA/pt9TpysitLzuT6M6MlY7KfqHQHLkZ3lIHwARWEakdkyM13m/Uce5o2nYd3Uj+akCMQ//GtWfBxx4zbHE5HL84WjQclRw5OeCdEN2Y8rRsJxSrrvuQsGotx0pluAw644d6Z2pPEaE6GZQHYSusJOR43vQuSth4qZj4CctZt8JEv/oNzJh6UMd0LDrE8RkvLnl5Dt2RcZ1GJpdPPMQP+/G453jclT2b4o8ezUsqSBFJZYsCeIvcRjfFMpEm09WMkMSMP/ro8nlrHV7ifXZADkNwsSCDaj3ElGs9QblQ5y9WfDpPEPhJX/U3BYKYKOzvJzg0B8DYbxezoMG4V4bC6a5C6K/Tv44ZLT55exon5R4d9R9WlDITLU0g5FOXP3c03wYTt0KUryNgyys20ZOI2A0sCxnwgJocUtUhPI5zalMIICalXkmaTMCaX0fZqNSOYjFYH569jdxlrbBvR0ijRyGtwBxyk1DbUIejHgnK1nzmYq6AOOwikOsRkOM3NbZP1ASC/yav6vmRnGKbEat/vnSnQSdecq/XKB47+DwX9C+oFfeUStk3GwqnoMzD1tnH088qVENx94cUuoH6J76uCtJ6i3QSU0eN2d7F+jxhzuhjGMspwMemtGNbuB15F3pH1x3SlA3vXfLyx3C0wInXOlSYe+7bC3mBqAmUXEni0Kye2XfXva/pUpqwn4Rmlhm6Dn0+JM/AEpUKNe4e4T5Ludu3/eU45zfclY3ELirPwpOUs7knLQY1adJyP66bqWDFyT5Hnocr8xOYf84Eiys/aaWGclQhBJ3bocWET1wTj2eLHf","numeric":true}/*/VAULT*/;
+const KEYKEY = 'szihalom-worklog-key';
+let AES = null, SEED = null, EXPECT = {};
+const TE = new TextEncoder(), TD = new TextDecoder();
+function b64(u8) { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function deriveKey(pw) {
+  const base = await crypto.subtle.importKey('raw', TE.encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: unb64(VAULT.salt), iterations: VAULT.iter, hash: 'SHA-256' },
+    base, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+}
+async function openVault(key) {
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(VAULT.iv) }, key, unb64(VAULT.ct));
+  return JSON.parse(TD.decode(pt));
+}
+async function sealStr(str) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, AES, TE.encode(str)));
+  return JSON.stringify({ enc: 1, iv: b64(iv), ct: b64(ct) });
+}
+async function unseal(o) { return JSON.parse(TD.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(o.iv) }, AES, unb64(o.ct)))); }
+
+async function load() {
+  let raw = null;
+  try { raw = localStorage.getItem(KEY); } catch (e) { }
+  if (raw) {
+    try {
+      const o = JSON.parse(raw);
+      if (!o.enc) return normalize(o);              // saved before the lock existed: encrypted on the next save
+      return normalize(await unseal(o));
+    } catch (e) {
+      // e.g. saved under an older password: keep it aside rather than overwrite it
+      try { localStorage.setItem(KEY + '-unreadable', raw); } catch (e2) { }
+      setTimeout(() => toast(t('unreadable')), 300);
+    }
+  }
+  return seed();
+}
+let saveTimer = null, saveChain = Promise.resolve();
+function save() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 250); }
+function saveNow() {
+  clearTimeout(saveTimer); saveTimer = null;
+  if (!AES || !S) return saveChain;
+  const json = JSON.stringify(S);
+  saveChain = saveChain.then(() => sealStr(json)).then(v => localStorage.setItem(KEY, v)).catch(() => toast(t('saveFail')));
+  try { localStorage.setItem(UIKEY, JSON.stringify({ tab: UI.tab, docKind: UI.docKind })); } catch (e) { }
+  return saveChain;
+}
+function validImport(o) {
+  return o && typeof o === 'object' && o.po && Array.isArray(o.po.lines) && o.po.lines.every(l => l.id && isFinite(l.poTotal))
+    && Array.isArray(o.machines) && Array.isArray(o.days) && o.days.every(d => ISO_RE.test(d.date) && d.hours && typeof d.hours === 'object')
+    && Array.isArray(o.stages) && o.stages.every(x => ISO_RE.test(x.to));
+}
+
+/* ============================================================ MONEY CORE
+   Each line is a pro-rata share of the PO LINE TOTAL, never days x a daily
+   rate — that is how the client's ERP does it, and anything over the PO is
+   rejected. Stages are computed CUMULATIVELY: stage k = cum(to_k) - cum(to_k-1),
+   with cum = round(lineTotal * unitDays / (units * totalDays)). The stages
+   therefore always add up to the PO line exactly. VAT is computed from the
+   sum of the rounded lines.                                                 */
+const worked = (day, mid) => Number(day.hours?.[mid]) > 0;
+const machinesOf = (s, lid) => s.machines.filter(m => m.line === lid);
+// a line may have its own day count; 0 = machine not on the PO (nothing billable until extended)
+const lineDaysOf = (s, l) => (l.days === 0 || l.days === '0') ? 0 : Math.max(1, Number(l.days) || Number(s.po.totalDays) || 1);
+const capOf = (s, l) => Math.max(1, Number(l.units) || 1) * lineDaysOf(s, l);
+function unitDays(s, lid, after, upTo) {        // after: exclusive (null = start), upTo: inclusive (null = end)
+  let n = 0;
+  const ms = machinesOf(s, lid);
+  for (const d of s.days) {
+    if (after && d.date <= after) continue;
+    if (upTo && d.date > upTo) continue;
+    for (const m of ms) if (worked(d, m.id)) n++;
+  }
+  return n;
+}
+function cumCents(s, l, upTo) {             // upTo: inclusive (null = all days)
+  if (!capOf(s, l)) return 0;
+  const ud = Math.min(unitDays(s, l.id, null, upTo), capOf(s, l));
+  return Math.round(toCents(l.poTotal) * ud / capOf(s, l));
+}
+const vatOf = (s, net) => Math.round(net * Math.round(Number(s.po.vatRate) * 10000) / 10000);
+const poNetCents = s => s.po.lines.reduce((a, l) => a + toCents(l.poTotal), 0);
+
+/* amounts for the range (after, upTo] */
+function rangeCalc(s, after, upTo) {
+  const lines = s.po.lines.map(l => {
+    const cap = capOf(s, l), units = Math.max(1, Number(l.units) || 1);
+    const rawTo = unitDays(s, l.id, null, upTo), rawFrom = after ? unitDays(s, l.id, null, after) : 0;
+    const billedUD = Math.min(rawTo, cap) - Math.min(rawFrom, cap);
+    const net = cumCents(s, l, upTo) - (after ? cumCents(s, l, after) : 0);
+    return {
+      line: l, units, rawUD: rawTo - rawFrom, billedUD, days: billedUD / units, net,
+      overUD: Math.max(0, rawTo - cap) - Math.max(0, rawFrom - cap),
+      cumDays: Math.min(rawTo, cap) / units, remDays: (cap - Math.min(rawTo, cap)) / units,
+      remNet: toCents(l.poTotal) - cumCents(s, l, upTo),
+    };
+  });
+  const net = lines.reduce((a, x) => a + x.net, 0);
+  const vat = vatOf(s, net);
+  const days = s.days.filter(d => (!after || d.date > after) && (!upTo || d.date <= upTo) && s.machines.some(m => worked(d, m.id)));
+  const hours = days.reduce((a, d) => a + s.machines.reduce((b, m) => b + (worked(d, m.id) ? Number(d.hours[m.id]) : 0), 0), 0);
+  return { lines, net, vat, gross: net + vat, days, hours, from: days[0]?.date, to: days.at(-1)?.date,
+    remNet: lines.reduce((a, x) => a + x.remNet, 0) };
+}
+
+/* stage contexts: closed stages + an optional draft for the open days */
+function sheetMachines(s, after, upTo) {
+  return s.machines.filter(m => s.days.some(d => (!after || d.date > after) && d.date <= upTo && worked(d, m.id)));
+}
+function poShort(s) { const m = String(s.po.number).match(/PO0*(\d+)\s*$/i); return m ? m[1] : String(s.po.number).replace(/\W/g, ''); }
+function autoCertNo(s, issued) { const d = parseD(issued); return `${s.numbering.certPrefix}-${d.getFullYear()}-${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-PO${poShort(s)}`; }
+function stageCtx(s, i) {
+  const st = s.stages[i];
+  const prevTo = i > 0 ? s.stages[i - 1].to : null;
+  return finishCtx(s, { ...st, idx: i, prevTo, draft: false, rec: st });
+}
+function draftCtx(s) {
+  const last = s.stages.at(-1);
+  const prevTo = last ? last.to : null;
+  const open = s.days.filter(d => !prevTo || d.date > prevTo);
+  if (!open.length) return null;
+  const to = open.at(-1).date, issued = todayIso();
+  const logFrom = last ? last.logFrom + sheetMachines(s, s.stages.at(-2)?.to ?? null, last.to).length : 1;
+  return finishCtx(s, { no: s.stages.length + 1, to, issued, certNo: autoCertNo(s, issued), logFrom, sig: {}, idx: s.stages.length, prevTo, draft: true, rec: null });
+}
+function finishCtx(s, c) {
+  c.calc = rangeCalc(s, c.prevTo, c.to);
+  c.machines = sheetMachines(s, c.prevTo, c.to);
+  c.year = parseD(c.to).getFullYear();
+  c.logNo = k => `${s.numbering.logPrefix}-${c.year}-${String(c.logFrom + k).padStart(3, '0')}`;
+  c.prior = s.stages.slice(0, c.idx).map((x, j) => ({ no: x.no, calc: rangeCalc(s, j > 0 ? s.stages[j - 1].to : null, x.to) }));
+  c.final = c.calc.remNet === 0;
+  c.hash = hashStr(JSON.stringify({
+    to: c.to, prevTo: c.prevTo, issued: c.issued, certNo: c.certNo, logFrom: c.logFrom,
+    days: c.calc.days.map(dayKey), nets: c.calc.lines.filter(x => x.net || x.billedUD).map(x => [x.line.id, x.net, x.billedUD]),
+    po: [s.po.number, s.po.vatRate], machines: c.machines.map(m => [m.id, m.name, m.line]),
+  }));
+  return c;
+}
+function totals(s) {
+  const all = rangeCalc(s, null, null);
+  const lastTo = s.stages.at(-1)?.to ?? null;
+  const certified = lastTo ? rangeCalc(s, null, lastTo) : null;
+  return { all, certNet: certified ? certified.net : 0, openNet: all.net - (certified ? certified.net : 0) };
+}
+
+/* ------------------------------------------------------------- signatures */
+function hashStr(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); }
+function dayKey(d) { return [d.date, Number(d.start), ...Object.keys(d.hours).sort().map(k => k + ':' + Number(d.hours[k] || 0))].join('|'); }
+const dayHash = d => hashStr(dayKey(d));
+function sigState(sig, hash) { if (!hasInk(sig)) return 'none'; return sig.hash === hash ? 'ok' : 'stale'; }
+const validSig = (sig, hash) => sigState(sig, hash) === 'ok' ? sig : null;
+
+/* ============================================================== RENDERING */
+function render() {
+  document.documentElement.lang = S.lang;
+  $('#appTitle').innerHTML = `${esc(t('app'))}<small>${esc(S.po.number)}</small>`;
+  document.querySelectorAll('.lang button').forEach(b => b.classList.toggle('on', b.dataset.v === S.lang));
+  document.querySelectorAll('#tabs button').forEach(b => { b.innerHTML = `<span class="ti">${TAB_ICON[b.dataset.v]}</span><span class="tl">${esc(t('tabt_' + b.dataset.v))}</span>`; b.title = t('tabt_' + b.dataset.v); b.classList.toggle('on', b.dataset.v === UI.tab); });
+  for (const v of ['days', 'calc', 'status', 'docs', 'settings']) {
+    const el = $('#v-' + v); el.hidden = UI.tab !== v; el.classList.toggle('printing', UI.tab === v);
+  }
+  const d = draftCtx(S);
+  const pill = $('#stagePill');
+  if (d) {
+    const n = d.calc.days.length;
+    pill.textContent = t('stagePill', { k: d.no, n });
+    pill.classList.toggle('warn', d.no > S.po.maxStages);
+  } else { pill.textContent = t('allCertified'); pill.classList.remove('warn'); }
+  ({ days: renderDays, calc: renderCalc, status: renderStatus, docs: renderDocs, settings: renderSettings })[UI.tab]();
+}
+
+function overWarnings(s) {
+  const r = poCompare(actualDays());
+  return r.over ? `<div class="alert err">\u26A0 ${esc(t('warnOverAll', { v: fmtUI(r.over) }))}</div>` : '';
+}
+function stageWarnings(s) {
+  const d = draftCtx(s);
+  if (d && d.no > s.po.maxStages) return `<div class="alert warn">${esc(t('warnThird', { n: s.po.maxStages, k: d.no }))}</div>`;
+  return '';
+}
+
+/* ------------------------------------------------------ Machine pictures
+   Built-in drawings so the crew recognises each machine at a glance; a
+   real photo of the machine (Settings) replaces the drawing. */
+const ART = {
+  dozer: `<svg viewBox="0 0 120 72" aria-hidden="true"><rect x="16" y="50" width="72" height="17" rx="8.5" fill="#2b2f36"/><g fill="#7b8290"><circle cx="25" cy="58.5" r="5"/><circle cx="40" cy="58.5" r="4"/><circle cx="53" cy="58.5" r="4"/><circle cx="66" cy="58.5" r="4"/><circle cx="79" cy="58.5" r="5"/></g><rect x="20" y="33" width="64" height="18" rx="3" fill="#F2B705"/><path d="M48 33V12h25l5 21z" fill="#F2B705"/><path d="M52 30V16h18l3.5 14z" fill="#bfe3ff"/><rect x="29" y="20" width="4" height="13" fill="#2b2f36"/><path d="M84 41h12v4H84zM84 47h12v3H84z" fill="#2b2f36"/><path d="M97 26q10 20 0 41h7q9-21 0-41z" fill="#C98F00"/><rect x="20" y="33" width="64" height="3" fill="#d9a400"/></svg>`,
+  excavator: `<svg viewBox="0 0 120 72" aria-hidden="true"><rect x="10" y="52" width="66" height="15" rx="7.5" fill="#2b2f36"/><g fill="#7b8290"><circle cx="18" cy="59.5" r="4.5"/><circle cx="32" cy="59.5" r="3.5"/><circle cx="45" cy="59.5" r="3.5"/><circle cx="58" cy="59.5" r="3.5"/><circle cx="68" cy="59.5" r="4.5"/></g><rect x="20" y="47" width="46" height="5" fill="#4a505b"/><rect x="8" y="34" width="58" height="14" rx="3" fill="#F2B705"/><rect x="5" y="36" width="9" height="11" rx="2" fill="#2b2f36"/><path d="M42 34V15h20v19z" fill="#F2B705"/><path d="M45 31V18h14v13z" fill="#bfe3ff"/><path d="M60 38l6 3 27-31-6-3z" fill="#E0A800"/><path d="M87 7l6 3 13 31-6 2z" fill="#E0A800"/><path d="M97 41h14l-3 13q-8 3-13-4z" fill="#2b2f36"/><circle cx="90" cy="8.5" r="3" fill="#2b2f36"/></svg>`,
+  tipper: `<svg viewBox="0 0 120 72" aria-hidden="true"><path d="M6 20h72l-3 27H9z" fill="#E07B00"/><path d="M6 20h72v4H6z" fill="#c46a00"/><g stroke="#c46a00" stroke-width="2"><path d="M22 25v20M38 25v20M54 25v20"/></g><rect x="4" y="47" width="108" height="6" fill="#2b2f36"/><path d="M81 47V24q0-5 5-5h18q6 0 8 9l2 19z" fill="#2f6db5"/><path d="M87 23h16q4 0 5 8H87z" fill="#bfe3ff"/><rect x="108" y="38" width="6" height="4" fill="#ffd34d"/><g fill="#2b2f36"><circle cx="16" cy="57" r="7.5"/><circle cx="33" cy="57" r="7.5"/><circle cx="86" cy="57" r="7.5"/><circle cx="102" cy="57" r="7.5"/></g><g fill="#9aa1ad"><circle cx="16" cy="57" r="3"/><circle cx="33" cy="57" r="3"/><circle cx="86" cy="57" r="3"/><circle cx="102" cy="57" r="3"/></g></svg>`,
+  other: `<svg viewBox="0 0 120 72" aria-hidden="true"><rect x="22" y="22" width="60" height="28" rx="4" fill="#F2B705"/><path d="M82 30h14l8 12v8H82z" fill="#F2B705"/><path d="M86 33h8l5 8H86z" fill="#bfe3ff"/><rect x="18" y="50" width="88" height="5" fill="#2b2f36"/><g fill="#2b2f36"><circle cx="34" cy="58" r="7"/><circle cx="90" cy="58" r="7"/></g></svg>`,
+};
+const KINDS = ['dozer', 'excavator', 'tipper', 'other'];
+function machineArt(m) {
+  if (m.photo) return `<span class="mimg"><img src="${m.photo}" alt="${esc(m.name)}"></span>`;
+  const num = (m.name.match(/\b(I{1,3}|IV|V|\d+)\.?\s*$/) || [])[1];
+  return `<span class="mimg art">${ART[m.kind] || ART.other}${num ? `<b class="mnum">${esc(num)}</b>` : ''}</span>`;
+}
+function readPhoto(file, done) {
+  const img = new Image();
+  img.onload = () => {
+    const k = Math.min(1, 480 / Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(img.src);
+    done(c.toDataURL('image/jpeg', 0.72));
+  };
+  img.onerror = () => toast(t('badPhoto'));
+  img.src = URL.createObjectURL(file);
+}
+
+/* ---------------------------------------------------------- Calculator
+   Same PO rule as the billing: each line = round(lineTotal x days/20).
+   Set days per machine and everything recounts as you go. */
+/* ------------------------------------------- Price list & PO comparison
+   Every machine carries the daily rate it was sold at. Work inside the PO
+   is billed by the PO rule; work beyond it (extra days, machines not on
+   the PO) is valued at the sold rate — that is what a PO extension has to
+   cover, and the extension request below explains it to the Client. */
+const rateC = m => toCents(m.rate || 0);
+function defaultRate(s, m) {
+  const l = s.po.lines.find(x => x.id === m.line);
+  const cap = l ? capOf(s, l) : 0;
+  return cap ? Math.round(toCents(l.poTotal) / cap) / 100 : 0;
+}
+const actualDays = () => Object.fromEntries(S.machines.map(m => [m.id, S.days.filter(d => worked(d, m.id)).length]));
+function poCompare(map) {
+  const rows = S.po.lines.map(l => {
+    const ms = machinesOf(S, l.id), units = Math.max(1, Number(l.units) || 1), cap = capOf(S, l);
+    const ud = ms.reduce((a, m) => a + (Number(map[m.id]) || 0), 0);
+    const inUD = Math.min(ud, cap), overUD = ud - inUD;
+    const rate = ms.length ? Math.round(ms.reduce((a, m) => a + rateC(m), 0) / ms.length) : 0;
+    return {
+      line: l, ms, units, poDays: lineDaysOf(S, l), onPO: cap > 0, ud, days: ud / units, overUD, overDays: overUD / units, rate,
+      net: cap ? Math.round(toCents(l.poTotal) * inUD / cap) : 0, overVal: overUD * rate,
+    };
+  });
+  const net = rows.reduce((a, x) => a + x.net, 0), over = rows.reduce((a, x) => a + x.overVal, 0), po = poNetCents(S);
+  return { rows, net, over, overVat: vatOf(S, over), po, newPo: po + over, rem: po - net };
+}
+function overBox(r, btnAction) {
+  if (!r.over) return `<div class="alert ok">✓ ${esc(t('noOver'))}</div>`;
+  return `<div class="card overbox">
+    <div class="k">${esc(t('overTitle'))}</div>
+    <div class="mid" style="color:var(--red)">${fmtUI(r.over)} <span class="small muted">${esc(t('netc').toLowerCase())}</span></div>
+    <div class="small">${esc(t('gross'))}: <b>${fmtUI(r.over + r.overVat)}</b> · ${fmtHUF(r.over)}</div>
+    <div class="tbl-wrap" style="margin-top:8px"><table class="t">
+      <thead><tr><th>${esc(t('machine'))}</th><th class="n">${esc(t('poDaysCol'))}</th><th class="n">${esc(t('totDaysCol'))}</th><th class="n">${esc(t('overDaysCol'))}</th><th class="n">${esc(t('rateCol'))}</th><th class="n">${esc(t('overValCol'))}</th></tr></thead>
+      <tbody>${r.rows.filter(x => x.overUD > 0).map(x => `<tr><td>${esc(x.line[S.lang] || x.line.en)}${x.onPO ? '' : ` <span class="badge bad">${esc(t('notOnPO'))}</span>`}</td>
+        <td class="n">${x.onPO ? fmtNum(x.poDays) : '—'}</td><td class="n">${fmtNum(x.days)}</td><td class="n"><b>+${fmtNum(x.overDays)}</b></td>
+        <td class="n">${fmtUI(x.rate)}${x.units > 1 ? ` × ${x.units}` : ''}</td><td class="n"><b>${fmtUI(x.overVal)}</b></td></tr>`).join('')}</tbody>
+    </table></div>
+    <div class="small" style="margin-top:8px">${esc(t('newPoTxt', { a: fmtUI(r.po), b: fmtUI(r.newPo) }))}</div>
+    <div class="row" style="margin-top:10px"><button class="btn primary" data-a="${btnAction}">\u{1F4C4} ${esc(t('makeExt'))}</button></div>
+  </div>`;
+}
+
+/* --------------------------------------------- PO extension request (EN) */
+const extNo = () => { const d = parseD(S.ext.date || todayIso()); return `STL-EXT-${d.getFullYear()}-${pad2(d.getMonth() + 1)}${pad2(d.getDate())}`; };
+function extHash() {
+  return hashStr(JSON.stringify({ plan: S.ext.plan, reason: S.ext.reason, date: S.ext.date,
+    m: S.machines.map(m => [m.id, m.line, m.rate]), l: S.po.lines.map(l => [l.id, l.poTotal, l.days, l.units]) }));
+}
+const joinAnd = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a.at(-1) : (a[0] || '');
+function extDefaultReason(r) {
+  const po = S.po, extra = r.rows.filter(x => !x.onPO && x.overUD > 0), longer = r.rows.filter(x => x.onPO && x.overUD > 0);
+  const parts = [];
+  if (longer.length) parts.push(`the rental of the ${joinAnd(longer.map(x => x.line.en + (x.units > 1 ? 's' : '')))} has to continue beyond the ${fmtDaysEN(longer[0].poDays)} days ordered`);
+  if (extra.length) parts.push(`additional machinery not covered by the order has been requested (${joinAnd(extra.map(x => x.line.en))})`);
+  return `At the Client's request, ${parts.join(', and ') || 'the works continue'} on the ${po.worksite || 'site'} at ${po.site}. `
+    + `The works on site cannot be completed within the quantities of purchase order ${po.number}. `
+    + `The additional days and machinery are charged at the same daily rates at which the plant was offered.`;
+}
+function extDoc() {
+  const s = S, P = s.parties.contractor, C = s.parties.client, po = s.po;
+  const r = poCompare(S.ext.plan || {});
+  const act = rangeCalc(s, null, null);
+  const h = extHash();
+  const sk = validSig(S.ext.sig?.contractor, h), sc = validSig(S.ext.sig?.client, h);
+  const brand = P.name.toUpperCase();
+  const b = x => `<b>${esc(x)}</b>`;
+  const rows = r.rows.filter(x => x.overUD > 0);
+  const sigCell = (sig, role, who) => `<div class="xs"><div class="sigspace">${sig ? sigMarkup(sig, 170, 44, "pt", "", 1.35) : ''}</div>
+    <div class="sigrule"></div><div class="sigrole">${role}</div><div class="sigwho">${esc(who)}</div>
+    ${sig ? `<div class="sigmeta">${esc(sig.name)} · ${esc(enLong(sig.at.slice(0, 10)))}</div>` : ''}</div>`;
+  return `<div class="xdoc">
+    <div class="run">${esc(brand)} &nbsp;|&nbsp; REQUEST FOR PO EXTENSION</div><div class="runrule"></div>
+    <div class="brand">${esc(brand)}</div>
+    <h1>REQUEST FOR PURCHASE ORDER EXTENSION</h1>
+    <div class="sub">Additional rental days and machinery — purchase order ${esc(po.number)}</div>
+    <div class="parties">
+      <div><div class="ph">CONTRACTOR / PERFORMING PARTY</div><div class="pn">${esc(P.name)}</div>
+        <div class="pt">${esc(P.address)}<br>VAT: ${esc(P.vat)}${P.vendor ? ` · Vendor code: ${esc(P.vendor)}` : ''}</div></div>
+      <div><div class="ph">CLIENT / ORDERING PARTY</div><div class="pn">${esc(C.name)}</div>
+        <div class="pt">${esc(C.address)}<br>${esc(C.address2)}${C.vat ? ` · VAT: ${esc(C.vat)}` : ''}</div></div>
+    </div>
+    <table class="lab">
+      <tr><td class="k" style="width:118pt">Request no.</td><td>${esc(extNo())} · dated ${esc(enLong(S.ext.date || todayIso()))}</td></tr>
+      <tr><td class="k">Purchase order</td><td>${b(po.number)}, dated ${esc(po.date.split('-').reverse().join('.'))} · project: ${esc(po.project)}</td></tr>
+      <tr><td class="k">Site</td><td>${esc(po.site)}</td></tr>
+      <tr><td class="k">Worked to date</td><td>${act.days.length} working days${act.from ? ` (${esc(enPeriod(act.from, act.to))})` : ''} · ${fmtDaysEN(act.hours)} machine hours, log sheets signed on site</td></tr>
+    </table>
+    <h2>1. Reason for the extension</h2>
+    <p>${esc(S.ext.reason || extDefaultReason(r)).replace(/\n/g, '<br>')}</p>
+    <h2>2. Work beyond the purchase order</h2>
+    <table class="plant">
+      <tr><th class="c" style="width:30pt">PO<br>line</th><th>Machine</th><th class="c">Ordered<br>days</th><th class="c">Total<br>days</th><th class="c">Beyond<br>the PO</th><th class="r">Daily rate<br>(EUR)</th><th class="r">Amount<br>(EUR)</th></tr>
+      ${rows.map(x => `<tr><td class="c">${x.onPO ? esc(x.line.no) : 'new'}</td><td>${esc(x.line.en)}${x.units > 1 ? `, ${x.units} units` : ''}${x.onPO ? '' : ' <i>(not on the PO)</i>'}</td>
+        <td class="c">${x.onPO ? fmtDaysEN(x.poDays) : '—'}</td><td class="c">${fmtDaysEN(x.days)}</td><td class="c b">${fmtDaysEN(x.overDays)}${x.units > 1 ? ` × ${x.units}` : ''}</td>
+        <td class="r">${fmtEN(x.rate)}</td><td class="r">${fmtEN(x.overVal)}</td></tr>`).join('')}
+      <tr class="net"><td></td><td colspan="5" class="b">EXTENSION — NET</td><td class="r b">${fmtEN(r.over)}</td></tr>
+      <tr><td></td><td colspan="5">VAT at ${fmtDaysEN(Number(po.vatRate) * 100)}%</td><td class="r">${fmtEN(r.overVat)}</td></tr>
+      <tr class="gross"><td></td><td colspan="5" class="b">EXTENSION — TOTAL</td><td class="r b">${fmtEN(r.over + r.overVat)}</td></tr>
+    </table>
+    <div class="note"><b>Amounts in EUR.</b> Daily rates are the rates at which the plant was offered (for the ordered machines the same as the purchase order: line total ÷ ordered days). ${po.rate ? `Fixed exchange rate ${po.rate} HUF/EUR.` : ''}</div>
+    <h2>3. Amended purchase order</h2>
+    <table class="lab">
+      <tr><td class="k" style="width:118pt">Current order</td><td>${fmtEN(r.po)} EUR net</td></tr>
+      <tr><td class="k">Extension requested</td><td><b>${fmtEN(r.over)} EUR net</b> · ${fmtEN(r.over + r.overVat)} EUR incl. VAT</td></tr>
+      <tr><td class="k">Amended order total</td><td><b>${fmtEN(r.newPo)} EUR net</b> · ${fmtEN(r.newPo + vatOf(s, r.newPo))} EUR incl. VAT</td></tr>
+    </table>
+    <h2>4. Request</h2>
+    <p>We kindly ask the Client to extend purchase order ${esc(po.number)} by <b>${fmtEN(r.over)} EUR net</b> so that the work beyond the current order can be invoiced. Work beyond the order will be invoiced only after the amended purchase order has been issued.</p>
+    <div class="sigs2">${sigCell(sk, 'Requested by the Contractor', P.name)}${sigCell(sc, 'Accepted by the Client', C.name)}</div>
+    <div class="footrule"></div>
+    <div class="foot"><span>${esc(P.name)} &nbsp;·&nbsp; ${esc(P.address.replace(/,\s*Hungary$/i, ''))} &nbsp;·&nbsp; Adószám: ${esc(P.tax)}</span><span>${esc(extNo())} &nbsp;·&nbsp; Page 1</span></div>
+  </div>`;
+}
+function renderExt(el) {
+  const r = poCompare(S.ext.plan || {}), h = extHash();
+  let html = `<div class="no-print">
+    <div class="card"><h2>${esc(t('extTitle'))}</h2>
+      <p class="small muted" style="margin:0 0 10px">${esc(t('extIntro'))}</p>
+      <div class="row">
+        <button class="btn" data-a="extFromActual">\u{1F4CB} ${esc(t('extUseActual'))}</button>
+        <button class="btn" data-a="extFromCalc">\u{1F9EE} ${esc(t('extUseCalc'))}</button>
+        <label class="fld" style="min-width:160px">${esc(t('extDate'))}<input type="date" value="${S.ext.date || todayIso()}" data-c="extDate"></label>
+      </div>
+      <h3>${esc(t('extDays'))}</h3>
+      <div class="grid3">${S.machines.map(m => `<label class="fld">${esc(m.name)}<input type="number" min="0" inputmode="numeric" value="${Number(S.ext.plan?.[m.id] || 0)}" data-c="extPlan" data-m="${esc(m.id)}"></label>`).join('')}</div>
+      <label class="fld" style="margin-top:10px">${esc(t('extReason'))}<textarea rows="4" data-c="extReason" placeholder="${esc(extDefaultReason(r))}">${esc(S.ext.reason || '')}</textarea></label>
+      <p class="small muted" style="margin:4px 0 0">${esc(t('extReasonHint'))}</p>
+    </div>
+    <div class="card"><h2>${esc(t('sigs'))}</h2><div class="row" style="align-items:stretch">
+      ${['contractor', 'client'].map(role => {
+        const sg = S.ext.sig?.[role], st = sigState(sg, h);
+        return `<div class="sigbox"><b>${esc(S.parties[role].name)}</b><br>
+          ${st === 'ok' ? `${sigMarkup(sg, 220, 50, "px", 'class="sigimg"', 1.9)}<span class="small muted">${esc(t('signedBy', { n: sg.name, d: uiDate(sg.at.slice(0, 10)) }))}</span>` : st === 'stale' ? `<div class="badge bad" style="margin:6px 0">${esc(t('stale'))}</div>` : `<div class="small muted" style="margin:6px 0">${esc(t('unsigned'))}</div>`}
+          <div class="row" style="margin-top:6px"><button class="btn sm ${st === 'ok' ? '' : 'primary'}" data-a="signExt" data-v="${role}">${esc(st === 'ok' ? t('resign') : t('sign'))}</button></div></div>`;
+      }).join('')}</div></div>
+  </div>`;
+  html += r.over ? `<div class="docs-out"><div class="xdoc-holder">${extDoc()}</div></div>` : `<div class="alert ok no-print">✓ ${esc(t('noOver'))}</div>`;
+  el.innerHTML += html;
+  fitDocs();
+}
+function fitDocs() {
+  document.querySelectorAll('.xdoc-holder').forEach(hd => {
+    const p = hd.firstElementChild; p.style.zoom = 1;
+    p.style.zoom = Math.min(1, hd.clientWidth / p.offsetWidth);
+  });
+}
+
+const maxDays = m => lineDaysOf(S, S.po.lines.find(l => l.id === m.line) || {});   // days on the PO
+const calcMax = m => Math.max(40, maxDays(m) * 2);                                     // room to plan past the PO
+function calcInit() { UI.calc = actualDays(); }
+function calcResult() {
+  const r = poCompare(UI.calc);
+  const certTo = S.stages.at(-1)?.to ?? null;
+  const cert = certTo ? S.po.lines.reduce((a, l) => a + cumCents(S, l, certTo), 0) : 0;
+  return { ...r, vat: vatOf(S, r.net), gross: r.net + vatOf(S, r.net), cert, next: r.net - cert, nextVat: vatOf(S, r.net - cert) };
+}
+function renderCalc() {
+  const el = $('#v-calc');
+  if (!UI.calc || S.machines.some(m => !(m.id in UI.calc))) calcInit();
+  el.innerHTML = `<div class="card">
+      <h2>${esc(t('calcTitle'))}</h2>
+      <p class="muted" style="margin:0 0 10px">${esc(t('calcIntro'))}</p>
+      <div class="row">
+        <button class="btn" data-a="calcPreset" data-v="now">\u{1F4CB} ${esc(t('presetNow'))}</button>
+        <button class="btn" data-a="calcPreset" data-v="full">✅ ${esc(t('presetFull', { n: S.po.totalDays }))}</button>
+        <button class="btn" data-a="calcPreset" data-v="zero">↺ ${esc(t('presetZero'))}</button>
+      </div>
+    </div>
+    <div class="ctiles">${S.machines.map(m => `<div class="ctile" data-ct="${esc(m.id)}">
+      ${machineArt(m)}
+      <div class="cname">${esc(m.name)}</div>
+      <div class="cstep">
+        <button data-a="calcStep" data-m="${esc(m.id)}" data-v="-1" aria-label="-1">−</button>
+        <input type="number" inputmode="numeric" min="0" max="${calcMax(m)}" value="${UI.calc[m.id]}" class="cnum" data-cm="${esc(m.id)}" aria-label="${esc(m.name)}">
+        <button data-a="calcStep" data-m="${esc(m.id)}" data-v="1" aria-label="+1">+</button>
+      </div>
+      <input type="range" min="0" max="${calcMax(m)}" step="1" value="${UI.calc[m.id]}" class="crange" data-cm="${esc(m.id)}" aria-label="${esc(m.name)}">
+      <div class="po">${maxDays(m) ? esc(t('poN', { n: maxDays(m) })) : `<span class="badge bad">${esc(t('notOnPO'))}</span>`} · ${fmtUI(rateC(m))}/${esc(t('daysWord1'))}</div>
+      <div class="ov"></div>
+    </div>`).join('')}</div>
+    <div id="calcOut"></div>`;
+  calcOut();
+}
+function calcOut() {
+  const r = calcResult();
+  for (const x of r.rows) for (const m of x.ms) {
+    const tile = document.querySelector(`[data-ct="${CSS.escape(m.id)}"]`);
+    if (!tile) continue;
+    tile.classList.toggle('over', x.overUD > 0);
+    tile.querySelector('.ov').textContent = x.overUD > 0 ? t('overN', { n: fmtNum(x.overDays) }) : '';
+  }
+  $('#calcOut').innerHTML = `
+    <div class="card calcsum">
+      <div class="k">${esc(t('cTotal'))}</div>
+      <div class="big">${fmtUI(r.net + r.over)} <span class="small muted">${esc(t('netc').toLowerCase())}</span></div>
+      <div class="row small" style="gap:14px"><span>${esc(t('cInPO'))}: <b>${fmtUI(r.net)}</b></span>${r.over ? `<span style="color:var(--red)">${esc(t('cOverPO'))}: <b>${fmtUI(r.over)}</b></span>` : ''}<span class="muted">${fmtHUF(r.net + r.over)}</span></div>
+      <div class="tbl-wrap" style="margin-top:10px"><table class="t"><tbody>
+        ${r.rows.map(x => `<tr><td>${esc(x.line[S.lang] || x.line.en)}${x.units > 1 ? ` <span class="muted small">(${x.units} ${esc(t('units'))})</span>` : ''}</td><td class="n">${fmtNum(x.days)} ${esc(t('daysWord'))}</td><td class="n"><b>${fmtUI(x.net)}</b>${x.overVal ? `<br><span style="color:var(--red)">+ ${fmtUI(x.overVal)}</span>` : ''}</td></tr>`).join('')}
+      </tbody></table></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><div class="k">${esc(t('cAlready'))}</div><div class="mid">${fmtUI(r.cert)}</div></div>
+      <div class="card hl"><div class="k">${esc(t('cNext'))}</div>
+        ${r.next >= 0 ? `<div class="mid">${fmtUI(r.next)} <span class="small muted">${esc(t('netc').toLowerCase())}</span></div><div class="small">${esc(t('gross'))}: <b>${fmtUI(r.next + r.nextVat)}</b></div>`
+        : `<div class="small" style="color:var(--red)">${esc(t('cLess'))}</div>`}</div>
+      <div class="card"><div class="k">${esc(t('cRemain'))}</div><div class="mid">${fmtUI(Math.max(0, r.rem))}</div></div>
+    </div>
+    ${overBox(r, 'extFromCalc')}
+    <div class="card"><div class="k">${esc(t('rateList'))}</div>
+      <div class="tbl-wrap"><table class="t"><tbody>
+        ${S.machines.map(m => `<tr><td>${esc(m.name)}</td><td class="n"><b>${fmtUI(rateC(m))}</b> ${esc(t('perMachineDay'))}</td><td class="n muted">${fmtHUF(rateC(m))}</td></tr>`).join('')}
+        <tr class="tot"><td>${esc(t('allMachinesDay', { n: S.machines.length }))}</td><td class="n">${fmtUI(S.machines.reduce((a, m) => a + rateC(m), 0))}</td><td class="n">${fmtHUF(S.machines.reduce((a, m) => a + rateC(m), 0))}</td></tr>
+      </tbody></table></div>
+      <p class="small muted" style="margin:8px 0 0">${esc(t('roundNote'))}</p>
+    </div>`;
+}
+function calcSet(mid, v) {
+  const m = S.machines.find(x => x.id === mid);
+  UI.calc[mid] = Math.max(0, Math.min(calcMax(m), Math.round(Number(v) || 0)));
+  document.querySelectorAll(`[data-cm="${CSS.escape(mid)}"]`).forEach(i => { if (Number(i.value) !== UI.calc[mid]) i.value = UI.calc[mid]; });
+  calcOut();
+}
+
+/* ---------------------------------------------------------- Add machine
+   Pick the type: the name is filled in as the next of its kind ("Dozer 2",
+   "4-axle tipper truck III.") and the fixed daily price comes from the
+   price list (Settings). An extra machine gets its own PO line, so closed
+   stages never change. */
+const KIND_NAME = { dozer: 'Dozer', excavator: 'Tracked excavator', tipper: '4-axle tipper truck', other: '' };
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+function nextMachineName(kind) {
+  const base = KIND_NAME[kind];
+  if (!base) return '';
+  const same = S.machines.filter(m => m.kind === kind);
+  const roman = same.some(m => /\s[IVX]+\.$/.test(m.name.trim()));
+  const taken = new Set(S.machines.map(m => m.name.trim().toLowerCase()));
+  for (let n = same.length + 1; ; n++) {
+    const name = roman ? `${base} ${ROMAN[n] || n}.` : (n === 1 ? base : `${base} ${n}`);
+    if (!taken.has(name.toLowerCase())) return name;
+  }
+}
+const fixedPrice = kind => Number(S.prices?.[kind]) || 0;
+function openAddMachine() {
+  const m = $('#modal');
+  const st = { kind: 'dozer', photo: '', nameEdited: false };
+  m.innerHTML = `<div class="mcard" role="dialog" aria-modal="true">
+    <h3>+ ${esc(t('amTitle'))}</h3>
+    <div class="k" style="margin-top:8px">${esc(t('amWhich'))}</div>
+    <div class="kinds">${KINDS.map(k => `<button type="button" class="kind${k === st.kind ? ' on' : ''}" data-k="${k}"><span class="mimg art">${ART[k]}</span>${esc(t('kind_' + k))}</button>`).join('')}</div>
+    <label class="fld" style="margin-top:12px">${esc(t('amName'))}<input type="text" id="amName" placeholder="${esc(t('amNamePh'))}"></label>
+    <div id="amPrice" style="margin-top:12px"></div>
+    <label class="btn sm" style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;cursor:pointer">\u{1F4F7} ${esc(t('amPhoto'))}<input type="file" accept="image/*" capture="environment" id="amPhoto" hidden></label>
+    <span id="amPhotoOk" class="small" style="color:var(--green)"></span>
+    <label class="chk" style="margin-top:12px"><input type="checkbox" id="amOnPO"> ${esc(t('amOnPO'))}</label>
+    <div class="grid2" id="amPoBox" style="margin-top:8px" hidden>
+      <label class="fld">${esc(t('amTotal'))}<input type="number" inputmode="decimal" step="any" min="0" id="amTotal" value=""></label>
+      <label class="fld">${esc(t('amDays'))}<input type="number" inputmode="numeric" min="1" id="amDays" value="${S.po.totalDays}"></label>
+    </div>
+    <div class="alert warn small" style="margin:12px 0 0">${esc(t('amPoNote'))}</div>
+    <div class="row" style="margin-top:12px"><span class="spacer"></span>
+      <button class="btn" id="amCancel">${esc(t('cancel'))}</button>
+      <button class="btn primary" id="amSave">${esc(t('save'))}</button></div>
+  </div>`;
+  m.hidden = false; document.body.style.overflow = 'hidden';
+  const close = () => { m.hidden = true; m.innerHTML = ''; document.body.style.overflow = ''; };
+  const num = id => Number(String($(id)?.value ?? '').replace(',', '.'));
+  const rate = () => fixedPrice(st.kind) || num('#amRateIn');
+  const showKind = () => {
+    m.querySelectorAll('.kind').forEach(x => x.classList.toggle('on', x.dataset.k === st.kind));
+    if (!st.nameEdited) $('#amName').value = nextMachineName(st.kind);
+    const p = fixedPrice(st.kind);
+    $('#amPrice').innerHTML = p
+      ? `<div class="fixprice"><span class="k">${esc(t('amFixed'))}</span><b>${fmtUI(toCents(p))}</b> / ${esc(t('daysWord1'))} <span class="muted">· ${fmtHUF(toCents(p))}</span><div class="small muted">${esc(t('amFixedHint'))}</div></div>`
+      : `<label class="fld">${esc(t('amRateLbl'))}<input type="number" inputmode="decimal" step="any" min="0" id="amRateIn" value=""></label>`;
+  };
+  const syncPo = () => {
+    $('#amPoBox').hidden = !$('#amOnPO').checked;
+    const r = rate();
+    if ($('#amOnPO').checked && r > 0 && !$('#amTotal').value) $('#amTotal').value = (r * (parseInt($('#amDays').value, 10) || 0)).toFixed(2);
+  };
+  m.querySelectorAll('.kind').forEach(b => b.onclick = () => { st.kind = b.dataset.k; showKind(); });
+  $('#amName').oninput = () => { st.nameEdited = $('#amName').value.trim() !== ''; };
+  $('#amPhoto').onchange = e => { const f = e.target.files[0]; if (f) readPhoto(f, url => { st.photo = url; $('#amPhotoOk').textContent = '✓ ' + t('amPhotoOk'); }); };
+  $('#amOnPO').onchange = syncPo;
+  $('#amCancel').onclick = close;
+  $('#amSave').onclick = () => {
+    const name = $('#amName').value.trim(), r = rate(), onPO = $('#amOnPO').checked;
+    const tot = onPO ? num('#amTotal') : 0, days = onPO ? parseInt($('#amDays').value, 10) : 0;
+    if (!name) { toast(t('amNeedName')); $('#amName').focus(); return; }
+    if (!(r > 0)) { toast(t('amNeedRate')); $('#amRateIn')?.focus(); return; }
+    if (onPO && !(tot >= 0 && $('#amTotal').value !== '')) { toast(t('amNeedTotal')); $('#amTotal').focus(); return; }
+    if (onPO && !(days >= 1)) { toast(t('amNeedDays')); return; }
+    const uid = Date.now().toString(36);
+    const no = Math.max(0, ...S.po.lines.map(l => Number(l.no) || 0)) + 1;
+    S.po.lines.push({ id: 'l' + uid, no, hu: name, en: name, cert: `Equipment Rental — ${name} (${baseH()}-hour day), with operator`, units: 1, poTotal: Math.round(tot * 100) / 100, days: onPO ? days : 0 });
+    S.machines.push({ id: 'm' + uid, line: 'l' + uid, name, kind: st.kind, photo: st.photo, rate: Math.round(r * 100) / 100, type: '', inv: '', operator: '' });
+    UI.draft = null; UI.calc = null;
+    close(); commit(); toast(t('amAdded', { n: name }));
+  };
+  showKind();
+}
+
+/* ---------------------------------------------------- Phone -> office
+   Each phone keeps its own data. "Send to office" shares an encrypted file
+   (same password) through the phone's share sheet — WhatsApp, e-mail, … —
+   and the office merges it in: new days and signatures are added, nothing
+   of the office's own work is overwritten. */
+const FILE_APP = 'szihalom-worklog';
+async function sealedFile(kind) {
+  await saveNow();
+  const box = JSON.parse(await sealStr(JSON.stringify(S)));
+  const body = JSON.stringify({ app: FILE_APP, kind, at: new Date().toISOString(), ...box });
+  const name = `${kind === 'send' ? 'munkanap' : 'mentes'}-${todayIso()}-${Date.now().toString(36).slice(-4)}.szwl.txt`;
+  return new File([body], name, { type: 'text/plain' });
+}
+function download(file) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(file); a.download = file.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+async function shareToOffice() {
+  const file = await sealedFile('send');
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: t('shareTitle'), text: t('shareText') }); return; }
+    catch (e) { if (e.name === 'AbortError') return; }
+  }
+  download(file); toast(t('shareSaved'));
+}
+async function readWorklogFile(text) {
+  const o = JSON.parse(text);
+  if (o && o.enc) {
+    try { return await unseal(o); } catch (e) { throw new Error('key'); }
+  }
+  return o;                                       // older plain export
+}
+const validSigCount = d => { const h = dayHash(d); return ['contractor', 'client'].filter(r => sigState(d.sig?.[r], h) === 'ok').length; };
+const lastSigAt = d => ['contractor', 'client'].map(r => d.sig?.[r]?.at || '').sort().at(-1) || '';
+function mergeIn(o) {
+  const res = { added: 0, sigs: 0, updated: 0, kept: 0, machines: 0 };
+  for (const l of o.po?.lines || []) if (!S.po.lines.some(x => x.id === l.id)) S.po.lines.push(clone(l));
+  for (const m of o.machines || []) if (!S.machines.some(x => x.id === m.id)) { S.machines.push(clone(m)); res.machines++; }
+  for (const d0 of o.days || []) {
+    const d = { date: d0.date, start: Number(d0.start ?? 7), note: d0.note || '', hours: clone(d0.hours || {}), sig: clone(d0.sig || {}) };
+    const mine = S.days.find(x => x.date === d.date);
+    if (!mine) { S.days.push(d); res.added++; continue; }
+    if (dayKey(mine) === dayKey(d)) {               // same day, same hours: collect any new signatures
+      const h = dayHash(d);
+      for (const r of ['contractor', 'client']) if (sigState(d.sig[r], h) === 'ok' && sigState(mine.sig[r], h) !== 'ok') { mine.sig[r] = d.sig[r]; res.sigs++; }
+      if (!mine.note && d.note) mine.note = d.note;
+      continue;
+    }
+    // different hours: the better-signed (then more recently signed) version wins
+    const a = validSigCount(d), b = validSigCount(mine);
+    if (a > b || (a === b && a > 0 && lastSigAt(d) > lastSigAt(mine))) { Object.assign(mine, d); res.updated++; }
+    else res.kept++;
+  }
+  sortAll(S);
+  return res;
+}
+function openImportChoice(o) {
+  const m = $('#modal');
+  m.innerHTML = `<div class="mcard" role="dialog" aria-modal="true">
+    <h3>${esc(t('impTitle'))}</h3>
+    <p class="muted">${esc(t('impInfo', { n: (o.days || []).length, s: (o.stages || []).length }))}</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+      <button class="btn huge primary" id="impMerge">➕ ${esc(t('impMerge'))}</button>
+      <div class="small muted" style="margin:-4px 2px 6px">${esc(t('impMergeHint'))}</div>
+      <button class="btn danger" id="impReplace">${esc(t('impReplace'))}</button>
+      <button class="btn ghost" id="impCancel">${esc(t('cancel'))}</button>
+    </div></div>`;
+  m.hidden = false; document.body.style.overflow = 'hidden';
+  const close = () => { m.hidden = true; m.innerHTML = ''; document.body.style.overflow = ''; };
+  $('#impCancel').onclick = close;
+  $('#impMerge').onclick = () => {
+    close();
+    const r = mergeIn(o);
+    UI.calc = null; commit();
+    toast(t('mergedTxt', { a: r.added, s: r.sigs, u: r.updated, k: r.kept }));
+  };
+  $('#impReplace').onclick = () => {
+    if (!confirm(t('confirmImport', { n: (o.days || []).length, s: (o.stages || []).length }))) return;
+    close(); S = normalize(o); UI.docStage = null; UI.calc = null; commit(); toast(t('imported'));
+  };
+}
+
+/* ---------------------------------------------------------------- Days
+   Built for the site crew: one day on screen, big tiles to tap, one big
+   button. Everything else (start hour, note, delete) sits under "more". */
+function stageOfDate(s, date) { return s.stages.find(x => date <= x.to) || null; }
+function sigChip(role, sig, hash) {
+  const st = sigState(sig, hash);
+  const who = shortParty(role);
+  if (st === 'ok') return `<span class="badge ok" title="${esc(sig.name)} · ${esc(sig.at)}">✓ ${esc(who)}${sigMarkup(sig, 70, 26, "px", 'class="sigthumb"', 1.4)}</span>`;
+  if (st === 'stale') return `<span class="badge bad" title="${esc(t('staleLong'))}">⚠ ${esc(who)}: ${esc(t('stale'))}</span>`;
+  return `<span class="badge no">${esc(who)}: ${esc(t('unsigned'))}</span>`;
+}
+function shortParty(role) { return S.parties[role].name.replace(/\s+(Kft\.?|Technology AD|AD|Zrt\.?|Ltd\.?)$/i, ''); }
+const shortDate = s => parseD(s).toLocaleDateString(S.lang === 'hu' ? 'hu-HU' : 'en-GB', { month: 'short', day: 'numeric' });
+const baseH = () => Number(S.po.baseHours) || 10;
+function selDay() {
+  const date = UI.sel || todayIso();
+  const entry = S.days.find(d => d.date === date);
+  if (entry) return { date, entry, hours: entry.hours };
+  if (!UI.draft || UI.draft.date !== date) UI.draft = { date, hours: Object.fromEntries(S.machines.map(m => [m.id, baseH()])) };
+  return { date, entry: null, hours: UI.draft.hours };
+}
+const bothSigned = d => { const h = dayHash(d); return sigState(d.sig.contractor, h) === 'ok' && sigState(d.sig.client, h) === 'ok'; };
+function renderDays() {
+  const el = $('#v-days');
+  const { date, entry, hours } = selDay();
+  const isToday = date === todayIso();
+  const tiles = S.machines.map(m => {
+    const h = Number(hours[m.id] || 0), on = h > 0;
+    return `<div class="tile ${on ? 'on' : 'off'}">
+      <button class="tmain" data-a="toggleM" data-m="${esc(m.id)}" aria-pressed="${on}">
+        ${machineArt(m)}
+        <span class="tname">${esc(m.name)}</span>
+        <span class="tstate">${on ? '✓ ' + esc(t('worked')) : '✕ ' + esc(t('idle'))}</span>
+      </button>
+      ${on ? `<div class="tstep"><button data-a="stepH" data-m="${esc(m.id)}" data-v="-0.5" aria-label="-">−</button><b>${fmtNum(h)} ${esc(t('hoursLbl'))}</b><button data-a="stepH" data-m="${esc(m.id)}" data-v="0.5" aria-label="+">+</button></div>` : ''}
+    </div>`;
+  }).join('') + `<button class="tile add" data-a="addMachine">+ ${esc(t('amTitle'))}</button>`;
+  let action;
+  if (!entry) action = `<button class="btn huge green" data-a="saveDay">✓ ${esc(t('saveDay'))}</button><p class="hint">${esc(t('notSaved'))}</p>`;
+  else if (bothSigned(entry)) action = `<div class="done">\u2713 ${esc(t('doneSigned'))}</div>
+      <button class="btn huge" data-a="shareOffice" style="margin-bottom:8px">\u{1F4E4} ${esc(t('shareBtn'))}</button>
+      <div class="row center">${sigChip('contractor', entry.sig.contractor, dayHash(entry))} ${sigChip('client', entry.sig.client, dayHash(entry))}</div>`;
+  else action = `<button class="btn huge primary" data-a="signDay">✍ ${esc(t('signNow'))}</button>
+      <p class="hint">${esc(t('signSub', { a: shortParty('contractor'), b: shortParty('client') }))}</p>
+      ${!(entry.sig.contractor || entry.sig.client) ? '' : `<div class="row center">${sigChip('contractor', entry.sig.contractor, dayHash(entry))} ${sigChip('client', entry.sig.client, dayHash(entry))}</div>`}`;
+  const over = poCompare(actualDays()).over;
+  let html = over ? `<div class="alert err">\u26A0 ${esc(t('capFull', { v: fmtUI(over) }))}</div>` : '';
+  html += `<div class="card today${isWeekend(date) ? ' weekend' : ''}" data-date="${date}">
+    <div class="dhead">
+      <div><div class="bigdate">${esc(shortDate(date))}</div>
+        <div class="wd">${esc(wdName(date))}${isToday ? ' · ' + esc(t('today')) : ''}${isWeekend(date) ? ` <span class="badge amber">${esc(t('weekend'))}</span>` : ''}</div></div>
+      <label class="other">\u{1F4C5} ${esc(t('otherDay'))}<input type="date" value="${date}" data-c="selDate"></label>
+    </div>
+    <div class="tiles">${tiles}</div>
+    ${action}
+    ${entry ? `<details class="more"><summary>${esc(t('more'))}</summary>
+      <div class="grid2" style="margin-top:8px">
+        <label class="fld">${esc(t('start'))}<input type="number" inputmode="decimal" min="0" max="23.5" step="0.5" value="${entry.start}" data-c="dayStart"></label>
+        <label class="fld">${esc(t('note'))}<input type="text" value="${esc(entry.note)}" data-c="dayNote"></label>
+      </div>
+      <div class="row" style="margin-top:10px">${bothSigned(entry) ? `<button class="btn sm" data-a="signDay">${esc(t('resign'))}</button>` : ''}<span class="spacer"></span><button class="btn sm danger" data-a="delDay">${esc(t('del'))}</button></div>
+    </details>` : ''}
+  </div>`;
+  html += `<div class="row" style="margin-top:4px"><button class="btn" data-a="shareOffice">\u{1F4E4} ${esc(t('shareBtn'))}</button><button class="btn ghost" data-a="import">\u{1F4E5} ${esc(t('impOpen'))}</button></div>`;
+  const past = S.days.filter(d => d.date !== date).slice().reverse();
+  if (past.length) {
+    html += `<h3 class="histh">${esc(t('history'))}</h3><div class="hist">` + past.map(d => {
+      const n = S.machines.filter(m => worked(d, m.id)).length;
+      const hrs = S.machines.reduce((a, m) => a + (worked(d, m.id) ? Number(d.hours[m.id]) : 0), 0);
+      const ok = bothSigned(d);
+      return `<button class="hrow${isWeekend(d.date) ? ' weekend' : ''}" data-a="pickDay" data-v="${d.date}">
+        <span class="hd"><b>${esc(shortDate(d.date))}</b> <span class="muted">${esc(wdName(d.date))}</span></span>
+        <span class="hm muted">${esc(t('machinesShort', { a: n, b: S.machines.length }))} · ${fmtNum(hrs)} ${esc(t('hoursLbl'))}</span>
+        <span class="badge ${ok ? 'ok' : 'amber'}">${ok ? '✓ ' + esc(t('signed')) : esc(t('missingSig'))}</span>
+      </button>`;
+    }).join('') + `</div>`;
+  }
+  el.innerHTML = html;
+}
+
+/* -------------------------------------------------------------- Status */
+function renderStatus() {
+  const el = $('#v-status');
+  const tot = totals(S);
+  const poNet = poNetCents(S);
+  const all = tot.all;
+  const d = draftCtx(S);
+  const curStage = d ? d.no : S.stages.length;
+  const pct = x => (100 * x / poNet).toFixed(2) + '%';
+  const daysWorked = all.days.length;
+  let html = overWarnings(S) + stageWarnings(S);
+  html += `<div class="stats">
+    <div class="stat"><div class="k">${esc(t('kpDays'))}</div><div class="v">${daysWorked} <span class="small muted">${esc(t('ofDays', { n: S.po.totalDays }))}</span></div>
+      <div class="s">${all.lines.map(x => `${esc(x.line[S.lang] || x.line.en)}: ${fmtNum(x.cumDays)}`).join(' · ')}</div></div>
+    <div class="stat"><div class="k">${esc(t('kpNet'))}</div><div class="v">${fmtUI(all.net)}</div><div class="s">${fmtHUF(all.net)} · ${esc(t('vatc'))} ${fmtUI(vatOf(S, all.net))}</div></div>
+    <div class="stat"><div class="k">${esc(t('kpRemain'))}</div><div class="v">${fmtUI(all.remNet)}</div><div class="s">${fmtHUF(all.remNet)} · ${esc(t('poNet'))} ${fmtUI(poNet)}</div></div>
+    <div class="stat"><div class="k">${esc(t('kpStage'))}</div><div class="v">${esc(curStage > S.po.maxStages ? t('stageOver', { k: curStage, n: S.po.maxStages }) : t('stageOf', { k: curStage || 1, n: S.po.maxStages }))}</div>
+      <div class="s">${d ? esc(t('openDaysInfo', { n: d.calc.days.length, net: fmtUI(d.calc.net) })) : esc(t('allCertified'))}</div></div>
+  </div>
+  <div class="card">
+    <div class="bar" role="img" aria-label="progress">
+      <i class="b1" style="width:${pct(tot.certNet)}"></i><i class="b2" style="width:${pct(tot.openNet)}"></i>
+    </div>
+    <div class="legend">
+      <span style="--c:var(--navy)">${esc(t('certified'))}: ${fmtUI(tot.certNet)}</span>
+      <span style="--c:#6d8fc4">${esc(t('open'))}: ${fmtUI(tot.openNet)}</span>
+      <span style="--c:#e3e7ef">${esc(t('remaining'))}: ${fmtUI(all.remNet)}</span>
+    </div>
+  </div>
+  <div class="card"><div class="tbl-wrap"><table class="t">
+    <thead><tr><th>${esc(t('line'))}</th><th class="n">${esc(t('units'))}</th><th class="n">${esc(t('daysUsed'))}</th><th class="n">${esc(t('netSoFar'))}</th><th class="n">${esc(t('remDays'))}</th><th class="n">${esc(t('remNet'))}</th></tr></thead>
+    <tbody>${all.lines.map(x => `<tr><td>${x.line.no}. ${esc(x.line[S.lang] || x.line.en)}${x.overUD ? ` <span class="badge bad">+${fmtNum(x.overUD / x.units)}</span>` : ''}</td>
+      <td class="n">${x.units}</td><td class="n">${fmtNum(x.cumDays)} / ${lineDaysOf(S, x.line)}</td><td class="n">${fmtUI(x.net)}</td><td class="n">${fmtNum(x.remDays)}</td><td class="n">${fmtUI(x.remNet)}</td></tr>`).join('')}
+      <tr class="tot"><td>Σ</td><td></td><td></td><td class="n">${fmtUI(all.net)}</td><td></td><td class="n">${fmtUI(all.remNet)}</td></tr>
+    </tbody></table></div></div>
+  <h3 class="histh">${esc(t('cmpTitle'))}</h3>${overBox(poCompare(actualDays()), 'extFromActual')}`;
+  // stages
+  html += `<div class="card"><h2>${esc(t('stages'))}</h2>`;
+  const rows = S.stages.map((_, i) => stageCtx(S, i));
+  if (d) rows.push(d);
+  if (!rows.length) html += `<p class="muted">${esc(t('noStages'))}</p>`;
+  else html += `<div class="tbl-wrap"><table class="t"><thead><tr><th>${esc(t('stageNo'))}</th><th>${esc(t('period'))}</th><th class="n">${esc(t('daysCol'))}</th><th class="n">${esc(t('netc'))}</th><th class="n">${esc(t('vatc'))}</th><th class="n">${esc(t('gross'))}</th><th>${esc(t('sigs'))}</th><th></th></tr></thead><tbody>
+    ${rows.map(c => `<tr><td><b>${c.no}.</b>${c.draft ? ` <span class="badge amber">${esc(t('draft'))}</span>` : ''}${c.no > S.po.maxStages ? ` <span class="badge bad">!</span>` : ''}</td>
+      <td>${esc(uiDate(c.calc.from))} – ${esc(uiDate(c.calc.to))}</td><td class="n">${c.calc.days.length}</td>
+      <td class="n">${fmtUI(c.calc.net)}</td><td class="n">${fmtUI(c.calc.vat)}</td><td class="n">${fmtUI(c.calc.gross)}</td>
+      <td>${c.draft ? '' : sigChip('contractor', c.sig.contractor, c.hash) + ' ' + sigChip('client', c.sig.client, c.hash)}</td>
+      <td><button class="btn sm" data-a="gotoDocs" data-v="${c.draft ? 'draft' : c.idx}">${esc(t('tab_docs'))} →</button></td></tr>`).join('')}
+    <tr class="tot"><td colspan="3">Σ</td><td class="n">${fmtUI(rows.reduce((a, c) => a + c.calc.net, 0))}</td><td class="n">${fmtUI(rows.reduce((a, c) => a + c.calc.vat, 0))}</td><td class="n">${fmtUI(rows.reduce((a, c) => a + c.calc.gross, 0))}</td><td colspan="2"></td></tr>
+    </tbody></table></div>`;
+  html += `</div>`;
+  // close stage
+  html += `<div class="card"><h2>${esc(t('closeStage'))}</h2>`;
+  if (!d) html += `<p class="muted">${esc(t('noOpen'))}</p>`;
+  else {
+    const openDates = d.calc.days.map(x => x.date);
+    html += `<div class="grid3">
+      <label class="fld">${esc(t('closeUpTo'))}<select id="closeTo">${openDates.slice().reverse().map(x => `<option value="${x}">${esc(uiDate(x))} (${esc(wdName(x))})</option>`).join('')}</select></label>
+      <div class="fld" style="justify-content:flex-end"><button class="btn primary" data-a="closeStage">${esc(t('closeBtn', { n: d.no }))}</button></div>
+    </div>`;
+  }
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+/* ---------------------------------------------------------- Documents */
+function docCtx() {
+  if (UI.docStage === 'draft' || UI.docStage === null) {
+    const d = draftCtx(S);
+    if (d) { UI.docStage = 'draft'; return d; }
+    if (!S.stages.length) return null;
+    UI.docStage = S.stages.length - 1;
+  }
+  if (UI.docStage >= S.stages.length) UI.docStage = S.stages.length - 1;
+  return UI.docStage >= 0 ? stageCtx(S, UI.docStage) : null;
+}
+function renderDocs() {
+  const el = $('#v-docs');
+  const ext = UI.docKind === 'ext';
+  const seg = `<div class="card no-print"><div class="row"><div class="seg" role="group">${['logs', 'ext'].map(k => `<button data-a="docKind" data-v="${k}" class="${ext === (k === 'ext') ? 'on' : ''}">${esc(t(k === 'logs' ? 'logSheets' : 'extTitle'))}</button>`).join('')}</div>
+    ${ext ? `<span class="spacer"></span><button class="btn primary" data-a="print">\u{1F5A8} ${esc(t('print'))}</button>` : ''}</div></div>`;
+  if (ext) { el.innerHTML = seg; renderExt(el); return; }
+  const c = docCtx();
+  const d = draftCtx(S);
+  const opts = S.stages.map((x, i) => `<option value="${i}" ${String(UI.docStage) === String(i) ? 'selected' : ''}>${x.no}. ${esc(t('docStage').toLowerCase())} — ${esc(uiDate(x.to))}</option>`).join('')
+    + (d ? `<option value="draft" ${UI.docStage === 'draft' ? 'selected' : ''}>${d.no}. ${esc(t('docStage').toLowerCase())} — ${esc(t('draft'))}</option>` : '');
+  let html = seg + `<div class="no-print">
+    <div class="card">
+      <div class="row">
+        <label class="fld" style="flex:1;min-width:200px">${esc(t('docStage'))}<select data-c="docStage">${opts}</select></label>
+        <button class="btn primary" data-a="print" ${c ? '' : 'disabled'}>\u{1F5A8} ${esc(t('print'))}</button>
+      </div>
+      <p class="small muted" style="margin:10px 0 0">${esc(t('langNote'))}</p>
+    </div>`;
+  if (!c) { el.innerHTML = html + `<div class="card muted">${esc(t('noDays'))}</div></div>`; return; }
+  if (c.draft) html += `<div class="alert warn">${esc(t('draftLong'))}</div>`;
+  html += overWarnings(S);
+  if (!c.draft) {
+    html += `<div class="card"><h2>${esc(t('stageSigs'))}</h2><p class="small muted" style="margin:0 0 10px">${esc(t('stageSigHint'))}</p><div class="row" style="align-items:stretch">
+      ${['contractor', 'client'].map(role => {
+        const sg = c.sig[role], st = sigState(sg, c.hash);
+        return `<div class="sigbox"><b>${esc(S.parties[role].name)}</b><br>
+          ${st === 'ok' ? `${sigMarkup(sg, 220, 50, "px", 'class="sigimg"', 1.9)}<span class="small muted">${esc(t('signedBy', { n: sg.name, d: uiDate(sg.at.slice(0, 10)) }))}</span>` : st === 'stale' ? `<div class="badge bad" style="margin:6px 0">${esc(t('stale'))}</div>` : `<div class="small muted" style="margin:6px 0">${esc(t('unsigned'))}</div>`}
+          <div class="row" style="margin-top:6px"><button class="btn sm ${st === 'ok' ? '' : 'primary'}" data-a="signStage" data-v="${role}">${esc(st === 'ok' ? t('resign') : t('sign'))}</button>
+          ${hasInk(sg) ? `<button class="btn sm ghost danger" data-a="unsignStage" data-v="${role}">${esc(t('removeSig'))}</button>` : ''}</div></div>`;
+      }).join('')}
+      </div>
+      <div class="row" style="margin-top:10px"><button class="btn" data-a="signStageBoth">${esc(t('signBoth'))}</button></div>
+    </div>
+    <details class="card"><summary><b>${esc(t('stageFields'))}</b></summary>
+      <div class="grid3" style="margin-top:10px">
+        <label class="fld">${esc(t('upTo'))}<input type="date" value="${c.to}" data-c="stageField" data-f="to"></label>
+        <label class="fld">${esc(t('logFrom'))}<input type="number" min="1" value="${c.logFrom}" data-c="stageField" data-f="logFrom"></label>
+      </div>
+      <div class="row" style="margin-top:10px"><button class="btn danger sm" data-a="delStage">${esc(t('delStage'))}</button></div>
+    </details>`;
+  }
+  html += `</div><div class="docs-out">`;
+  if (!c.calc.days.length) html += `<div class="card muted no-print">${esc(t('noDocDays'))}</div>`;
+  else {
+    html += logSheets(c);
+  }
+  html += `</div>`;
+  el.innerHTML = html;
+}
+/* ---- Gépüzemnapló, drawn as SVG with the ReportLab generator's coordinates
+   (the ReportLab generator in reference/). Form text Hungarian, Arial,
+   black; entries English, Segoe Print, blue #1A3A8F. */
+const LB_COLS = [['Nap', 24], ['órától', 26], ['óráig', 26], ['alapóra', 30], ['túlóra', 26], ['telj. óra', 30],
+  ['Gépmunkaóra', 34], ['TMK', 22], ['géphiba', 26], ['időjárás', 26], ['állás', 22], ['munkahiány', 28], ['mennyiség', 28],
+  ['mértékegység', 30], ['gázolaj', 26], ['benzin', 24], ['olaj', 22], ['olaj', 22], ['MUNKAHELY', 0], ['IGAZOLAS', 115],
+  ['A gépkezelő aláírása', 34]];
+function logSheets(c) {
+  const s = S;
+  let out = '';
+  c.machines.forEach((m, k) => {
+    const docno = c.logNo(k);
+    const days = c.calc.days.filter(d => worked(d, m.id));
+    const byMonth = {};
+    for (const d of days) (byMonth[d.date.slice(0, 7)] ||= []).push(d);
+    for (const ym of Object.keys(byMonth).sort()) {
+      const list = byMonth[ym];
+      for (let i = 0; i < list.length; i += 12) out += `<div class="sheet-page">${logSheetSVG(c, m, docno, list.slice(i, i + 12))}</div>`;
+    }
+  });
+  return out;
+}
+function logSheetSVG(c, m, docno, rows) {
+  const PW = 841.89, PH = 595.28, M = 26, TW = PW - 2 * M, HDR_H = 118, ROW_H = 19, NROWS = 12;
+  const base = Number(S.po.baseHours) || 10;
+  const fixed = LB_COLS.reduce((a, [n, w]) => a + (n === 'MUNKAHELY' ? 0 : w), 0);
+  const WS = LB_COLS.map(([n, w]) => n === 'MUNKAHELY' ? TW - fixed : w);
+  const XS = [M]; for (const w of WS) XS.push(XS.at(-1) + w);
+  const X = XS.at(-1);
+  const Y = y => +(PH - y).toFixed(2);
+  const o = [];
+  const ln = (x1, y1, x2, y2, w = 0.5) => o.push(`<line x1="${+x1.toFixed(2)}" y1="${Y(y1)}" x2="${+x2.toFixed(2)}" y2="${Y(y2)}" stroke-width="${w}"/>`);
+  const rc = (x, y, w, h, sw) => o.push(`<rect x="${x}" y="${Y(y + h)}" width="${+w.toFixed(2)}" height="${+h.toFixed(2)}" stroke-width="${sw}" fill="none"/>`);
+  const tx = (x, y, str, size, cls = 'f', anchor = 'start') => o.push(`<text x="${+x.toFixed(2)}" y="${Y(y)}" font-size="${size}" class="${cls}"${anchor !== 'start' ? ` text-anchor="${anchor}"` : ''}>${esc(str)}</text>`);
+  const ct = (x0, x1, y, str, size, cls = 'f') => tx((x0 + x1) / 2, y, str, size, cls, 'middle');
+  const sgn = (x, y, w, h, sig, pen) => sig && o.push(sigMarkup(sig, w, h, '', `x="${+x.toFixed(2)}" y="${Y(y + h)}"`, pen));
+
+  const [yy0, mo] = rows[0].date.split('-');
+  const dn = rows.map(r => Number(r.date.slice(8)));
+  const dek = [...new Set(dn.map(n => n <= 10 ? 1 : n <= 20 ? 2 : 3))];
+  const top = PH - M, hh = 58, hy = top - hh;
+  // header box
+  rc(M, hy, TW, hh, 0.8);
+  const x1 = M + 86, x2 = x1 + 272, x3 = x2 + 250;
+  for (const x of [x1, x2, x3]) ln(x, hy, x, hy + hh);
+  const r1 = hy + hh * 2 / 3, r2 = hy + hh / 3;
+  ln(x1, r1, x2, r1); ln(x1, r2, x2, r2); ln(M, r1, x1, r1);
+  tx(M + 5, r1 + 6, 'Üzemvez.', 6.5);
+  tx(M + 5, hy + 10, S.parties.contractor.name, 6.4, 'h');
+  tx(x1 + 5, r1 + 6, 'Géptípus:', 6.5); tx(x1 + 5, r2 + 6, 'Megnevezés:', 6.5); tx(x1 + 5, hy + 6, 'Lelt. szám:', 6.5);
+  tx(x1 + 70, r2 + 6, m.name, 9, 'h');
+  if (m.type) tx(x1 + 70, r1 + 6, m.type, 8, 'h');
+  if (m.inv) tx(x1 + 70, hy + 6, m.inv, 8, 'h');
+  tx((x2 + x3) / 2, hy + hh - 18, 'Gépüzemnapló', 15, 'f b', 'middle');
+  tx(x2 + 6, hy + 14, 'A gépkezelő(k) neve:', 6.5);
+  ln(x2 + 92, hy + 13, x3 - 8, hy + 13);
+  if (m.operator) tx(x2 + 96, hy + 15, m.operator, 8, 'h');
+  const yy = hy + hh - 16;
+  tx(x3 + 10, yy, yy0, 8, 'h'); tx(x3 + 36, yy, 'év', 6.3);
+  tx(x3 + 50, yy, mo, 8, 'h'); tx(x3 + 68, yy, 'hó', 6.3);
+  tx(x3 + 84, yy, pad2(dn[0]), 8, 'h'); tx(x3 + 102, yy, '-tól', 6.3);
+  tx(x3 + 120, yy, pad2(dn.at(-1)), 8, 'h'); tx(x3 + 138, yy, '-ig', 6.3);
+  tx(x3 + 10, hy + 12, 'Dekád:', 6.3); tx(x3 + 46, hy + 12, dek.join('–'), 8, 'h');
+  // main table
+  const ty = hy - 12, tb = ty - HDR_H - NROWS * ROW_H - ROW_H;
+  rc(M, tb, TW, ty - tb, 0.8);
+  const gy = ty - 22;
+  for (const x of XS.slice(1, -1)) ln(x, tb, x, gy);
+  ln(M, gy, X, gy);
+  const grp = (i0, i1, label) => { ln(XS[i0], gy, XS[i0], ty); ln(XS[i1 + 1], gy, XS[i1 + 1], ty); ct(XS[i0], XS[i1 + 1], ty - 14, label, 6.2); };
+  grp(3, 5, 'Gépműszakidő'); grp(8, 10, 'Gépműszakidő'); grp(12, 13, 'Telj.'); grp(14, 17, 'Betöltött üzemanyag');
+  ln(XS[19], gy, XS[19], ty); ln(XS[20], gy, XS[20], ty);
+  ct(XS[18], XS[19], ty - 10, 'Munkahely megnevezése és', 5.8); ct(XS[18], XS[19], ty - 17, 'munkaszáma', 5.8);
+  ct(XS[19], XS[20], ty - 7, 'Igazolásra jogosult', 5.6); ct(XS[19], XS[20], ty - 13, 'munkahelyi vezető', 5.6); ct(XS[19], XS[20], ty - 19, 'aláírása', 5.6);
+  const hb = ty - HDR_H;
+  ln(M, hb, X, hb);
+  LB_COLS.forEach(([n], i) => {
+    if (n === 'MUNKAHELY' || n === 'IGAZOLAS') return;
+    const cx = XS[i] + WS[i] / 2 + 2.2;
+    o.push(`<text transform="translate(${+cx.toFixed(2)} ${Y(hb + 4)}) rotate(-90)" font-size="6" class="f">${esc(n)}</text>`);
+  });
+  // rows
+  let yrow = hb, sumBase = 0, sumOver = 0, sumTot = 0;
+  for (let r = 0; r < NROWS; r++) {
+    yrow -= ROW_H;
+    ln(M, yrow, X, yrow, 0.4);
+    const d = rows[r];
+    if (!d) continue;
+    const h = Number(d.hours[m.id]), st = Number(d.start);
+    const bh = Math.min(h, base), ov = Math.max(0, h - base);
+    sumBase += bh; sumOver += ov; sumTot += h;
+    const cen = (i, v, size = 8, cls = 'h') => ct(XS[i], XS[i + 1], yrow + 6, v, size, cls);
+    cen(0, String(Number(d.date.slice(8))), 8.5, dow(d.date) === 6 || dow(d.date) === 0 ? 'h b' : 'h');
+    cen(1, clock(st)); cen(2, clock((st + h) % 24)); cen(3, hNum(bh));
+    if (ov) cen(4, hNum(ov));
+    cen(5, hNum(h)); cen(6, hNum(h));
+    tx(XS[18] + 6, yrow + 6, S.po.worksite, 7.2, 'h');
+    const hsh = dayHash(d);
+    const cs = validSig(d.sig.client, hsh), ks = validSig(d.sig.contractor, hsh);
+    if (cs) sgn(XS[19] + 3, yrow + 1.5, WS[19] - 6, ROW_H - 3, cs, 0.95);
+    if (ks) sgn(XS[20] + 1, yrow + 1.5, WS[20] - 2, ROW_H - 3, ks, 0.8);
+  }
+  yrow -= ROW_H;
+  ln(M, yrow, X, yrow, 0.8);
+  tx(M + 4, yrow + 6, 'Összesen:', 6.5, 'f b');
+  const tot = (i, v) => ct(XS[i], XS[i + 1], yrow + 6, hNum(v), 9, 'h b');
+  tot(3, sumBase); if (sumOver) tot(4, sumOver); tot(5, sumTot); tot(6, sumTot);
+  // footer block
+  const fy = yrow - 8, fb = M + 14, fh = fy - fb;
+  rc(M, fb, TW, fh, 0.8);
+  const xr = X - 230;
+  ln(xr, fb, xr, fy);
+  const f1 = fb + fh * 2 / 3, f2 = fb + fh / 3;
+  ln(M, f1, xr, f1); ln(M, f2, xr, f2); ln(xr, f1, X, f1); ln(xr, f2, X, f2);
+  tx(M + 6, fy - 10, 'Az adatok valódiságáért büntetőjogi felelősséget vállalok', 6.3);
+  ln(M + 150, f1 + 9, M + 290, f1 + 9); ln(M + 320, f1 + 9, M + 470, f1 + 9);
+  ct(M + 150, M + 290, f1 + 2, 'kiállító gépkezelő', 5.8); ct(M + 320, M + 470, f1 + 2, 'igazoló munkahelyi vez.', 5.8);
+  if (!c.draft) {
+    const ks = validSig(c.sig.contractor, c.hash), cs = validSig(c.sig.client, c.hash);
+    if (ks) sgn(M + 160, f1 + 9.5, 120, fy - f1 - 10, ks, 1.15);
+    if (cs) sgn(M + 335, f1 + 9.5, 120, fy - f1 - 10, cs, 1.15);
+  }
+  tx(M + 6, f2 + 8, 'Műszaki szemle elvégzése:', 6.3);
+  tx(M + 120, f2 + 8, '…………… év  ……… hó  ……… nap', 6.3);
+  tx(M + 6, fb + 10, 'Felvett üzemanyag:', 6.3);
+  for (let k = 0; k < 6; k++) ln(M + 110 + k * 46, fb, M + 110 + k * 46, f2);
+  ct(xr, X, fy - 10, 'Kiállítandó 3 példányban', 5.8);
+  ln(xr + 20, f1 + 9, X - 20, f1 + 9); ct(xr, X, f1 + 2, 'ellenőrző', 5.8);
+  ln(xr + 20, f2 + 9, X - 20, f2 + 9); ct(xr, X, f2 + 2, 'főgépész', 5.8);
+  tx(xr + 8, fb + 10, 'Össz.:', 6.3); tx(X - 70, fb + 10, '……… pld.', 6.3);
+  // page footer
+  const P = S.parties.contractor;
+  tx(M, M + 2, `${P.name}  ·  ${P.address.replace(/,\s*Hungary$/i, '')}  ·  Adószám: ${P.tax}`, 6.3, 'g');
+  tx(PW - M, M + 2, docno, 6.3, 'g', 'end');
+  if (c.draft) o.push(`<text x="${PW / 2}" y="${PH / 2}" font-size="96" class="wm" text-anchor="middle" transform="rotate(-20 ${PW / 2} ${PH / 2})">TERVEZET / DRAFT</text>`);
+  return `<svg class="lb" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${PW} ${PH}" role="img" aria-label="Gépüzemnapló ${esc(m.name)}"><rect width="${PW}" height="${PH}" fill="#fff"/><g stroke="#000" stroke-linecap="square">${o.filter(x => x.startsWith('<line') || x.startsWith('<rect')).join('')}</g>${o.filter(x => !x.startsWith('<line') && !x.startsWith('<rect')).join('')}</svg>`;
+}
+
+/* ------------------------------------------------------------ Settings */
+function fld(label, path, val, type = 'text', extra = '') {
+  return `<label class="fld">${esc(label)}<input type="${type}" value="${esc(val)}" data-c="set" data-path="${path}" ${type === 'number' ? 'inputmode="decimal" step="any"' : ''} ${extra}></label>`;
+}
+function renderSettings() {
+  const el = $('#v-settings');
+  const p = S.po;
+  const tests = selfTest();
+  const pass = tests.every(x => x.pass);
+  const mism = p.lines.filter(l => machinesOf(S, l.id).length !== Number(l.units))
+    .map(l => `<div class="alert warn small">${esc(t('unitsMismatch', { l: l[S.lang] || l.en, u: l.units, m: machinesOf(S, l.id).length }))}</div>`).join('');
+  el.innerHTML = `
+  <div class="card"><h2>${esc(t('sPO'))}</h2><div class="grid3">
+    ${fld(t('poNumber'), 'po.number', p.number)}${fld(t('poDate'), 'po.date', p.date, 'date')}${fld(t('project'), 'po.project', p.project)}
+    ${fld(t('rate'), 'po.rate', p.rate, 'number')}${fld(t('totalDays'), 'po.totalDays', p.totalDays, 'number', 'min="1"')}${fld(t('vatRate'), 'po.vatPct', +(p.vatRate * 100).toFixed(4), 'number')}
+    ${fld(t('maxStages'), 'po.maxStages', p.maxStages, 'number', 'min="1"')}${fld(t('minFirst'), 'po.minFirstStage', p.minFirstStage, 'number', 'min="0"')}${fld(t('baseHours'), 'po.baseHours', p.baseHours, 'number', 'min="1"')}
+  </div><div class="grid2" style="margin-top:10px">${fld(t('site'), 'po.site', p.site)}${fld(t('worksite'), 'po.worksite', p.worksite)}</div></div>
+
+  <div class="card"><h2>${esc(t('sLines'))}</h2>${mism}
+    ${p.lines.map((l, i) => `<div class="lrow">
+      ${fld(t('lNo'), `po.lines.${i}.no`, l.no)}${fld(t('lHu'), `po.lines.${i}.hu`, l.hu)}${fld(t('lEn'), `po.lines.${i}.en`, l.en)}
+      ${fld(t('lDays'), `po.lines.${i}.days`, lineDaysOf(S, l), 'number', 'min="0" step="1"')}
+      ${fld(t('lUnits'), `po.lines.${i}.units`, l.units, 'number', 'min="1" step="1"')}${fld(t('lTotal'), `po.lines.${i}.poTotal`, l.poTotal, 'number')}
+      <button class="btn sm ghost danger" data-a="delLine" data-v="${i}" aria-label="${esc(t('delete'))}">✕</button></div>`).join('')}
+    <div class="row" style="margin-top:10px"><button class="btn sm" data-a="addLine">${esc(t('addLine'))}</button><span class="spacer"></span><b>${esc(t('poNet'))}: ${fmtUI(poNetCents(S))}</b></div>
+  </div>
+
+  <div class="card"><h2>${esc(t('sPrices'))}</h2><p class="small muted" style="margin-top:0">${esc(t('pricesHint'))}</p>
+    <div class="grid3">${KINDS.filter(k => k !== 'other').map(k => fld(t('kind_' + k) + ' \u2014 EUR / ' + t('daysWord1'), `prices.${k}`, S.prices?.[k] ?? '', 'number', 'min="0"')).join('')}</div></div>
+
+  <div class="card"><h2>${esc(t('sMachines'))}</h2>
+    ${S.machines.map((m, i) => `<div class="mrow">
+      <div class="mpic">${machineArt(m)}
+        <select data-c="set" data-path="machines.${i}.kind" aria-label="${esc(t('amPic'))}">${KINDS.map(k => `<option value="${k}" ${k === m.kind ? 'selected' : ''}>${esc(t('kind_' + k))}</option>`).join('')}</select>
+        <button class="btn sm" data-a="photo" data-v="${i}">\u{1F4F7} ${esc(t('amPhoto'))}</button>
+        ${m.photo ? `<button class="btn sm ghost danger" data-a="unphoto" data-v="${i}">${esc(t('removePhoto'))}</button>` : ''}</div>
+      ${fld(t('mName'), `machines.${i}.name`, m.name)}
+      ${fld(t('mRate'), `machines.${i}.rate`, m.rate ?? '', 'number', 'min="0"')}
+      <label class="fld">${esc(t('mLine'))}<select data-c="set" data-path="machines.${i}.line">${p.lines.map(l => `<option value="${esc(l.id)}" ${l.id === m.line ? 'selected' : ''}>${esc(l.no)}. ${esc(l[S.lang] || l.en)}</option>`).join('')}</select></label>
+      ${fld(t('mType'), `machines.${i}.type`, m.type)}${fld(t('mInv'), `machines.${i}.inv`, m.inv)}${fld(t('mOp'), `machines.${i}.operator`, m.operator)}
+      <button class="btn sm ghost danger" data-a="delMachine" data-v="${i}" aria-label="${esc(t('delete'))}">✕</button></div>`).join('')}
+    <input type="file" id="photoFile" accept="image/*" capture="environment" hidden data-c="photoFile">
+    <div class="row" style="margin-top:10px"><button class="btn sm" data-a="addMachine">${esc(t('addMachine'))}</button></div>
+  </div>
+
+  <div class="card"><h2>${esc(t('sParties'))}</h2>
+    <h3>${esc(t('contractor'))}</h3><div class="grid3">
+      ${fld(t('pName'), 'parties.contractor.name', S.parties.contractor.name)}${fld(t('pAddr'), 'parties.contractor.address', S.parties.contractor.address)}
+      ${fld(t('pVat'), 'parties.contractor.vat', S.parties.contractor.vat)}${fld(t('pTax'), 'parties.contractor.tax', S.parties.contractor.tax)}
+      ${fld(t('pVendor'), 'parties.contractor.vendor', S.parties.contractor.vendor)}${fld(t('pEmail'), 'parties.contractor.email', S.parties.contractor.email, 'email')}</div>
+    <h3>${esc(t('client'))}</h3><div class="grid3">
+      ${fld(t('pName'), 'parties.client.name', S.parties.client.name)}${fld(t('pAddr'), 'parties.client.address', S.parties.client.address)}
+      ${fld(t('pAddr2'), 'parties.client.address2', S.parties.client.address2)}${fld(t('pVat'), 'parties.client.vat', S.parties.client.vat)}</div>
+    <h3>${esc(t('sDocs'))}</h3><div class="grid3">
+      ${fld(t('logPrefix'), 'numbering.logPrefix', S.numbering.logPrefix)}</div>
+  </div>
+
+  <div class="card"><h2>${esc(t('sData'))}</h2>
+    <p class="small muted" style="margin-top:0">${esc(t('storageNote'))}</p>
+    <div class="row">
+      <button class="btn primary" data-a="export">⬇ ${esc(t('exportBtn'))}</button>
+      <button class="btn" data-a="import">\u2B06 ${esc(t('importBtn'))}</button>
+      <button class="btn" data-a="shareOffice">\u{1F4E4} ${esc(t('shareBtn'))}</button>
+      <input type="file" id="importFile" accept=".txt,.json,text/plain,application/json" hidden data-c="importFile">
+      <span class="spacer"></span>
+      <button class="btn danger" data-a="reset">${esc(t('resetBtn'))}</button>
+    </div>
+  </div>
+
+  <details class="card" ${pass ? '' : 'open'}><summary><b>${esc(t('selfTest'))}</b> — <span class="${pass ? 'badge ok' : 'badge bad'}">${esc(pass ? t('allPass') : t('someFail'))}</span></summary>
+    <ul class="tests small">${tests.map(x => `<li class="${x.pass ? 'p' : 'f'}">${x.pass ? '✓' : '✗'} ${esc(x.name)}${x.pass ? '' : ` — got ${esc(x.got)}`}</li>`).join('')}</ul>
+  </details>`;
+}
+
+function signFlow(steps, done) {
+  // steps: [{role, title}] — each signs in turn on this device
+  const results = {};
+  let i = 0;
+  const next = () => {
+    if (i >= steps.length) { done(results); return; }
+    const st = steps[i];
+    openPad(st, i > 0, sig => { results[st.role] = sig; i++; next(); }, () => { if (Object.keys(results).length) done(results); });
+  };
+  next();
+}
+/* ============================================================ SIGNATURE INK
+   Signatures are kept as vector pen strokes — [x, y, width] per point —
+   never as pixels, and drawn as SVG curves, so a printout is sharp at any
+   resolution. Width follows the hand like a ballpoint: thinner when the
+   stroke is fast, fuller when slow or (with a stylus) when pressed. */
+const INK = '#1b2c6e';
+const PEN = { min: 1.0, max: 3.0 };                 // pad pixels
+const hasInk = sig => !!(sig && (sig.vec || sig.png));
+function inkSegs(pts) {                             // pts: [{x, y, w}] -> [{d, w}]
+  const f = n => +n.toFixed(1), P = p => `${f(p.x)} ${f(p.y)}`;
+  const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  const n = pts.length;
+  if (n === 1) return [{ d: `M${P(pts[0])}l0.01 0`, w: pts[0].w }];
+  if (n === 2) return [{ d: `M${P(pts[0])}L${P(pts[1])}`, w: (pts[0].w + pts[1].w) / 2 }];
+  const out = [{ d: `M${P(pts[0])}L${P(mid(pts[0], pts[1]))}`, w: pts[0].w }];
+  for (let i = 1; i < n - 1; i++) out.push({ d: `M${P(mid(pts[i - 1], pts[i]))}Q${P(pts[i])} ${P(mid(pts[i], pts[i + 1]))}`, w: pts[i].w });
+  out.push({ d: `M${P(mid(pts[n - 2], pts[n - 1]))}L${P(pts[n - 1])}`, w: pts[n - 1].w });
+  return out;
+}
+/* sigMarkup(sig, boxW, boxH, unit, extraAttrs, penMax)
+   penMax: the thickest line in the output, in the box's units — like the
+   tip of a real pen, it stays the same whatever size the signature is. */
+function sigMarkup(sig, bw, bh, unit = '', extra = '', penMax = 1.1) {
+  const head = vb => `<svg ${extra} width="${+bw.toFixed(2)}${unit}" height="${+bh.toFixed(2)}${unit}" viewBox="${vb}" preserveAspectRatio="xMidYMax meet" aria-label="signature">`;
+  if (!sig) return '';
+  if (!sig.vec) return sig.png ? head('0 0 300 100') + `<image href="${sig.png}" width="300" height="100" preserveAspectRatio="xMidYMax meet"/></svg>` : '';
+  const { w, h, s } = sig.vec;
+  const scale = Math.min(bw / w, bh / h);
+  const k = Math.min(penMax / (scale * PEN.max), 0.05 * h / PEN.max);   // pen-tip correction
+  const groups = new Map();
+  for (const flat of s) {
+    const pts = [];
+    for (let i = 0; i < flat.length; i += 3) pts.push({ x: flat[i], y: flat[i + 1], w: flat[i + 2] });
+    for (const sg of inkSegs(pts)) {
+      const q = +(Math.round(sg.w * k / 0.04) * 0.04).toFixed(2) || 0.04;
+      groups.set(q, (groups.get(q) || '') + sg.d);
+    }
+  }
+  return head(`0 0 ${w} ${h}`) + `<g fill="none" stroke="${INK}" stroke-linecap="round" stroke-linejoin="round">`
+    + [...groups].map(([q, d]) => `<path stroke-width="${q}" d="${d}"/>`).join('') + '</g></svg>';
+}
+
+/* ============================================================ SIGNATURE PAD */
+function openPad({ role, title }, handover, onSave, onCancel) {
+  const m = $('#modal');
+  const party = S.parties[role].name;
+  m.innerHTML = `<div class="mcard" role="dialog" aria-modal="true">
+    <h3>${esc(t('signFor', { p: party }))}</h3>
+    <div class="muted small">${esc(title)}</div>
+    ${handover ? `<div class="handover">\u{1F91D} ${esc(t('handover', { p: party }))}</div>` : ''}
+    <label class="fld" style="margin-top:10px">${esc(t('signName'))}<input type="text" id="padName" value="${esc(S.signers[role] || '')}" autocomplete="name"></label>
+    <div class="padwrap"><canvas id="pad"></canvas><div class="base"></div><div class="x">✕</div></div>
+    <div class="small muted">${esc(t('signHint'))}</div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="padClear">${esc(t('clear'))}</button><span class="spacer"></span>
+      <button class="btn" id="padCancel">${esc(t('cancel'))}</button>
+      <button class="btn primary" id="padSave">${esc(t('save'))}</button>
+    </div></div>`;
+  m.hidden = false;
+  document.body.style.overflow = 'hidden';
+  const cv = $('#pad'), ctx = cv.getContext('2d');
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const r = cv.getBoundingClientRect();
+  cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+  ctx.scale(dpr, dpr);
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = INK; ctx.fillStyle = INK;
+  const strokes = [];
+  let cur = null, vel = 0;
+  const pos = e => { const b = cv.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top, t: e.timeStamp, p: e.pressure }; };
+  const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  const seg = (a, c, b, w) => { ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(a.x, a.y); c ? ctx.quadraticCurveTo(c.x, c.y, b.x, b.y) : ctx.lineTo(b.x, b.y); ctx.stroke(); };
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault(); cv.setPointerCapture(e.pointerId);
+    const p = pos(e); vel = 0;
+    cur = { pen: e.pointerType === 'pen', pts: [{ x: p.x, y: p.y, t: p.t, w: PEN.max * 0.55 }] };
+    strokes.push(cur);
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!cur) return; e.preventDefault();
+    const co = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+    for (const ev of (co.length ? co : [e])) {
+      const p = pos(ev), pts = cur.pts, last = pts.at(-1);
+      const d = Math.hypot(p.x - last.x, p.y - last.y);
+      if (d < 1.2) continue;
+      vel = 0.6 * vel + 0.4 * d / Math.max(1, p.t - last.t);          // px per ms, smoothed
+      let w = PEN.max / (1 + vel * 1.3);
+      if (cur.pen && p.p > 0) w *= 0.45 + 1.1 * p.p;                     // stylus pressure
+      w = Math.max(PEN.min, Math.min(PEN.max, 0.65 * last.w + 0.35 * w));
+      pts.push({ x: p.x, y: p.y, t: p.t, w });
+      const n = pts.length;
+      if (n === 2) seg(pts[0], null, mid(pts[0], pts[1]), pts[0].w);
+      else seg(mid(pts[n - 3], pts[n - 2]), pts[n - 2], mid(pts[n - 2], pts[n - 1]), pts[n - 2].w);
+    }
+  });
+  const up = () => {
+    if (!cur) return;
+    const pts = cur.pts, n = pts.length;
+    if (n === 1) { ctx.beginPath(); ctx.arc(pts[0].x, pts[0].y, pts[0].w / 2, 0, Math.PI * 2); ctx.fill(); }
+    else { pts[n - 1].w *= 0.6; seg(mid(pts[n - 2], pts[n - 1]), null, pts[n - 1], pts[n - 1].w); }   // lift-off taper
+    cur = null;
+  };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  const close = () => { m.hidden = true; m.innerHTML = ''; document.body.style.overflow = ''; };
+  $('#padClear').onclick = () => { ctx.clearRect(0, 0, cv.width, cv.height); strokes.length = 0; };
+  $('#padCancel').onclick = () => { close(); onCancel && onCancel(); };
+  $('#padSave').onclick = () => {
+    const name = $('#padName').value.trim();
+    const len = strokes.reduce((a, s) => a + s.pts.length, 0);
+    if (len < 3) { toast(t('emptySig')); return; }
+    if (!name) { toast(t('needName')); $('#padName').focus(); return; }
+    // crop to the ink; store vectors (1 decimal) — a few KB, crisp at any size
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (const s of strokes) for (const p of s.pts) { x0 = Math.min(x0, p.x - p.w); y0 = Math.min(y0, p.y - p.w); x1 = Math.max(x1, p.x + p.w); y1 = Math.max(y1, p.y + p.w); }
+    x0 -= 2; y0 -= 2;
+    const rd = n => Math.round(n * 10) / 10;
+    const vec = { w: rd(x1 - x0 + 2), h: rd(y1 - y0 + 2), s: strokes.map(s => s.pts.flatMap(p => [rd(p.x - x0), rd(p.y - y0), rd(p.w)])) };
+    S.signers[role] = name;
+    close();
+    onSave({ name, vec, at: new Date().toISOString() });
+  };
+  setTimeout(() => $('#padName') && !$('#padName').value && $('#padName').focus(), 50);
+}
+
+/* ================================================================ ACTIONS */
+function toast(msg) { const el = $('#toast'); el.textContent = msg; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 3200); }
+function commit() { sortAll(S); save(); render(); }
+const dayAt = el => S.days.find(d => d.date === el.closest('[data-date]').dataset.date);
+function guardStageEdit(date) {
+  const st = stageOfDate(S, date);
+  if (!st) return true;
+  const sigd = st.sig && (hasInk(st.sig.contractor) || hasInk(st.sig.client));
+  return !sigd || confirm(t('inStageWarn', { n: st.no }));
+}
+function guardDayEdit(d) {
+  const h = dayHash(d);
+  const signed = ['contractor', 'client'].some(r => sigState(d.sig[r], h) === 'ok');
+  if (signed && !confirm(t('daySignedWarn'))) return false;
+  return guardStageEdit(d.date);
+}
+function setHours(mid, fn) {
+  const { entry, hours } = selDay();
+  if (entry && !guardDayEdit(entry)) return;
+  hours[mid] = fn(Number(hours[mid] || 0));
+  entry ? commit() : render();
+}
+const actions = {
+  tab(b) { UI.tab = b.dataset.v; history.replaceState(null, '', '#' + UI.tab); saveNow(); render(); window.scrollTo(0, 0); },
+  lang(b) { S.lang = b.dataset.v; save(); render(); },
+  pickDay(b) { UI.sel = b.dataset.v; render(); window.scrollTo(0, 0); },
+  toggleM(b) { setHours(b.dataset.m, h => h > 0 ? 0 : baseH()); },
+  stepH(b) { setHours(b.dataset.m, h => Math.max(0.5, Math.min(24, h + Number(b.dataset.v)))); },
+  saveDay() {
+    const { date, entry, hours } = selDay();
+    if (entry) return;
+    if (isWeekend(date) && !confirm(t('confirmWeekend', { d: uiDate(date), w: wdName(date) }))) return;
+    if (!guardStageEdit(date)) return;
+    S.days.push({ date, start: 7, note: '', hours: { ...hours }, sig: {} });
+    UI.draft = null; commit(); toast(t('savedDay'));
+  },
+  delDay(b) {
+    const d = dayAt(b);
+    if (!confirm(t('confirmDelDay', { d: uiDate(d.date) }))) return;
+    if (!guardStageEdit(d.date)) return;
+    S.days = S.days.filter(x => x !== d); commit();
+  },
+  signDay(b) {
+    const d = dayAt(b);
+    const title = t('signDay', { d: `${uiDate(d.date)} (${wdName(d.date)})` });
+    signFlow([{ role: 'contractor', title }, { role: 'client', title }], res => {
+      const h = dayHash(d);
+      for (const [role, sg] of Object.entries(res)) d.sig[role] = { ...sg, hash: h };
+      commit();
+    });
+  },
+  gotoDocs(b) { UI.docStage = b.dataset.v === 'draft' ? 'draft' : Number(b.dataset.v); UI.tab = 'docs'; render(); window.scrollTo(0, 0); },
+  closeStage() {
+    const d = draftCtx(S); if (!d) return;
+    const to = $('#closeTo').value, issued = todayIso();
+    if (!d.calc.days.some(x => x.date === to)) { toast(t('invalidTo')); return; }
+    const k = S.stages.length + 1;
+    const tmp = finishCtx(S, { ...d, to, issued });
+    const nDays = tmp.calc.days.length;
+    if (k === 1 && nDays < S.po.minFirstStage && !confirm(t('warnFirstMin', { n: S.po.minFirstStage, d: nDays }))) return;
+    if (k > S.po.maxStages && !confirm(t('warnExceedStages', { k, n: S.po.maxStages }))) return;
+    if (k === S.po.maxStages && tmp.calc.remNet > 0 && !confirm(t('warnLastStage', { n: k, r: fmtUI(tmp.calc.remNet) }))) return;
+    S.stages.push({ no: k, to, issued, certNo: autoCertNo(S, issued), logFrom: d.logFrom, sig: {} });
+    UI.docStage = S.stages.length - 1;
+    commit(); toast(t('stageCreated', { n: k }));
+  },
+  print() { window.print(); },
+  signStage(b) { stageSign([b.dataset.v]); },
+  signStageBoth() { stageSign(['contractor', 'client']); },
+  unsignStage(b) {
+    if (!confirm(t('confirmRemoveSig'))) return;
+    delete S.stages[UI.docStage].sig[b.dataset.v]; commit();
+  },
+  delStage() {
+    const i = UI.docStage;
+    if (i !== S.stages.length - 1) { toast(t('onlyLastDel')); return; }
+    if (!confirm(t('confirmDelStage', { n: S.stages[i].no }))) return;
+    S.stages.pop(); UI.docStage = null; commit();
+  },
+  addLine() {
+    const no = Math.max(0, ...S.po.lines.map(l => Number(l.no) || 0)) + 1;
+    S.po.lines.push({ id: 'l' + Date.now().toString(36), no, hu: '', en: '', cert: 'Equipment Rental — ', units: 1, poTotal: 0 });
+    commit();
+  },
+  delLine(b) { if (confirm(t('confirmDelLine'))) { S.po.lines.splice(Number(b.dataset.v), 1); commit(); } },
+  addMachine() { openAddMachine(); },
+  async lock() { await saveNow(); try { localStorage.removeItem(KEYKEY); } catch (e) { } location.reload(); },
+  docKind(b) { UI.docKind = b.dataset.v; render(); },
+  extFromActual() { S.ext.plan = actualDays(); S.ext.date = todayIso(); UI.docKind = 'ext'; UI.tab = 'docs'; commit(); window.scrollTo(0, 0); },
+  extFromCalc() { if (!UI.calc) calcInit(); S.ext.plan = { ...UI.calc }; S.ext.date = todayIso(); UI.docKind = 'ext'; UI.tab = 'docs'; commit(); window.scrollTo(0, 0); },
+  signExt(b) {
+    signFlow([{ role: b.dataset.v, title: t('extTitle') + ' \u00b7 ' + extNo() }], res => {
+      const h = extHash();
+      for (const [role, sg] of Object.entries(res)) S.ext.sig[role] = { ...sg, hash: h };
+      commit();
+    });
+  },
+  calcPreset(b) {
+    const v = b.dataset.v;
+    if (v === 'now') calcInit();
+    else UI.calc = Object.fromEntries(S.machines.map(m => [m.id, v === 'full' ? maxDays(m) : 0]));
+    renderCalc();
+  },
+  calcStep(b) { calcSet(b.dataset.m, (UI.calc[b.dataset.m] || 0) + Number(b.dataset.v)); },
+  photo(b) { const f = $('#photoFile'); f.dataset.i = b.dataset.v; f.click(); },
+  unphoto(b) { delete S.machines[Number(b.dataset.v)].photo; commit(); },
+  delMachine(b) { if (confirm(t('confirmDelMachine'))) { S.machines.splice(Number(b.dataset.v), 1); commit(); } },
+  async export() { download(await sealedFile('backup')); toast(t('exported')); },
+  shareOffice() { shareToOffice(); },
+  import() { $('#importFile').click(); },
+  reset() { if (confirm(t('confirmReset'))) { const lang = S.lang; S = seed(); S.lang = lang; UI.docStage = null; commit(); } },
+};
+function stageSign(roles) {
+  const i = UI.docStage; const st = S.stages[i]; if (!st) return;
+  const title = t('signStage', { n: st.no, p: uiDate(st.to) });
+  signFlow(roles.map(role => ({ role, title })), res => {
+    const h = stageCtx(S, i).hash;
+    for (const [role, sg] of Object.entries(res)) st.sig[role] = { ...sg, hash: h };
+    commit();
+  });
+}
+function setPath(obj, path, val) {
+  const ks = path.split('.'); let o = obj;
+  for (let i = 0; i < ks.length - 1; i++) o = o[ks[i]];
+  o[ks.at(-1)] = val;
+}
+const changes = {
+  selDate(el) { if (ISO_RE.test(el.value)) { UI.sel = el.value; render(); } },
+  dayStart(el) {
+    const d = dayAt(el);
+    if (!guardDayEdit(d)) { el.value = d.start; return; }
+    d.start = Math.max(0, Math.min(23.5, Number(el.value) || 0)); commit();
+  },
+  dayNote(el) { dayAt(el).note = el.value; save(); },
+  docStage(el) { UI.docStage = el.value === 'draft' ? 'draft' : Number(el.value); render(); },
+  stageField(el) {
+    const i = UI.docStage, st = S.stages[i], f = el.dataset.f;
+    if (f === 'to') {
+      const prev = i > 0 ? S.stages[i - 1].to : '', next = S.stages[i + 1]?.to;
+      if (!ISO_RE.test(el.value) || (prev && el.value <= prev) || (next && el.value >= next)) { toast(t('invalidTo')); el.value = st.to; return; }
+    }
+    if (f === 'issued' && !ISO_RE.test(el.value)) { el.value = st.issued; return; }
+    st[f] = f === 'logFrom' ? Math.max(1, parseInt(el.value, 10) || 1) : el.value;
+    if (f === 'issued') st.certNo = autoCertNo(S, st.issued);
+    commit();
+  },
+  set(el) {
+    const path = el.dataset.path;
+    let v = el.value;
+    if (el.type === 'number') v = Number(String(v).replace(',', '.')) || 0;
+    if (path === 'po.vatPct') { S.po.vatRate = v / 100; }
+    else setPath(S, path, /\.(units|totalDays|maxStages|minFirstStage|days)$/.test(path) ? Math.max(/(minFirstStage|\.days)$/.test(path) ? 0 : 1, Math.round(v)) : v);
+    commit();
+  },
+  extDate(el) { if (ISO_RE.test(el.value)) { S.ext.date = el.value; commit(); } },
+  extPlan(el) { S.ext.plan[el.dataset.m] = Math.max(0, parseInt(el.value, 10) || 0); commit(); },
+  extReason(el) { S.ext.reason = el.value.trim(); commit(); },
+  photoFile(el) {
+    const f = el.files[0], i = Number(el.dataset.i); el.value = '';
+    if (f) readPhoto(f, url => { S.machines[i].photo = url; commit(); });
+  },
+  importFile(el) {
+    const f = el.files[0]; el.value = ''; if (!f) return;
+    const r = new FileReader();
+    r.onload = async () => {
+      let o;
+      try { o = await readWorklogFile(r.result); }
+      catch (e) { toast(t(e.message === 'key' ? 'badKey' : 'badImport')); return; }
+      if (!validImport(o)) { toast(t('badImport')); return; }
+      openImportChoice(o);
+    };
+    r.readAsText(f);
+  },
+};
+document.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b && actions[b.dataset.a]) actions[b.dataset.a](b, e); });
+document.addEventListener('input', e => { if (e.target.dataset.cm) calcSet(e.target.dataset.cm, e.target.value); });
+document.addEventListener('change', e => { const el = e.target.closest('[data-c]'); if (el && changes[el.dataset.c]) changes[el.dataset.c](el); });
+window.addEventListener('pagehide', saveNow);
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); });
+window.addEventListener('resize', () => { if (UI.tab === 'docs') fitDocs(); });
+window.addEventListener('beforeprint', () => document.querySelectorAll('.xdoc').forEach(p => p.style.zoom = 1));
+window.addEventListener('afterprint', () => fitDocs());
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').hidden) $('#padCancel')?.click(); });
+
+/* ============================================================ SELF-CHECK
+   Runs on the Settings tab against fresh seed data — PLAN.md §9. The
+   expected figures travel inside the vault with the data they check. */
+function selfTest() {
+  const r = [], E = EXPECT;
+  const ok = (name, got, want) => r.push({ name, got: String(got), pass: String(got) === String(want) });
+  const s = seed(), to1 = E.closeTo, N = s.po.totalDays;
+  const full = () => Object.fromEntries(s.machines.map(m => [m.id, 10]));
+  const addWeekdays = (st, from, n) => { let d = from; for (let i = 0; i < n; i++) { do d = addDays(d, 1); while (isWeekend(d)); st.days.push({ date: d, start: 7, note: '', hours: full(), sig: {} }); } return d; };
+  const c1 = rangeCalc(s, null, to1), k = c1.days.length;
+  ok('Stage 1 lines', c1.lines.map(x => fmtEN(x.net)).join(' | '), E.s1Lines);
+  ok('Stage 1 net', fmtEN(c1.net), E.s1Net);
+  ok('Stage 1 VAT', fmtEN(c1.vat), E.s1Vat);
+  ok('Stage 1 gross', fmtEN(c1.gross), E.s1Gross);
+  ok('Stage 1 machine hours', c1.hours, E.s1Hours);
+  ok('Remaining after stage 1', fmtEN(c1.remNet), E.s1Rem);
+  ok('Remaining days per line', c1.lines.map(x => x.remDays).join(','), E.s1RemDays);
+  ok('PO net', fmtEN(poNetCents(s)), E.poNet);
+  ok('PO VAT / gross', fmtEN(vatOf(s, poNetCents(s))) + ' / ' + fmtEN(poNetCents(s) + vatOf(s, poNetCents(s))), E.poVatGross);
+  const s2 = clone(s), end = addWeekdays(s2, to1, N - k);
+  const c2 = rangeCalc(s2, to1, end);
+  ok('Stage 2 net', fmtEN(c2.net), E.s2Net);
+  ok('Stage 1 + stage 2 = PO', fmtEN(c1.net + c2.net), E.poNet);
+  ok('Per line: stage 1 + stage 2 = PO line', c1.lines.map((x, i) => fmtEN(x.net + c2.lines[i].net)).join(' | '), s.po.lines.map(l => fmtEN(toCents(l.poTotal))).join(' | '));
+  const s3 = clone(s); addWeekdays(s3, to1, 1);
+  const c3 = rangeCalc(s3, null, null);
+  ok('One more day = round(PO line x n/N)', c3.lines.map(x => x.net).join(','), s3.po.lines.map(l => Math.round(toCents(l.poTotal) * (k + 1) / N)).join(','));
+  ok('Open stage = cum(n) - cum(n-1)', rangeCalc(s3, to1, null).net, c3.net - c1.net);
+  const s4 = clone(s), tips = machinesOf(s4, s4.po.lines[2].id);
+  s4.days[0].hours[s4.machines[0].id] = 0; s4.days[0].hours[tips[1].id] = 0;
+  const c4 = rangeCalc(s4, null, null);
+  ok('Idle machine day not billed', fmtDaysEN(c4.lines[0].days), String(k - 1));
+  ok('One idle unit = half a line-day', fmtDaysEN(c4.lines[2].days), String(k - 0.5));
+  ok('Idle net = PO line x (n-1)/N', c4.lines[0].net, Math.round(toCents(s.po.lines[0].poTotal) * (k - 1) / N));
+  const s5 = clone(s2); addWeekdays(s5, end, 2);
+  const c5 = rangeCalc(s5, null, null);
+  ok('Beyond PO: billing capped at PO net', fmtEN(c5.net), E.poNet);
+  ok('Beyond PO: overage flagged', c5.lines[0].overUD, 2);
+  ok('Beyond PO: nothing remaining', c5.remNet, 0);
+  const keep = S; S = s5;
+  try {
+    const pc = poCompare(actualDays());
+    ok('Beyond PO: value at sold rates', fmtEN(pc.over), E.over22);
+    ok('Beyond PO: amended PO', fmtEN(pc.newPo), E.newPo22);
+  } finally { S = keep; }
+  return r;
+}
+
+/* ================================================================== BOOT */
+async function start(key, payload, remember) {
+  AES = key; SEED = payload.seed; EXPECT = payload.expect || {};
+  if (remember) try { localStorage.setItem(KEYKEY, b64(new Uint8Array(await crypto.subtle.exportKey('raw', key)))); } catch (e) { }
+  S = await load();
+  try { Object.assign(UI, JSON.parse(localStorage.getItem(UIKEY) || '{}')); } catch (e) { }
+  UI.docStage = null;
+  const hashTab = location.hash.slice(1);
+  if (['days', 'calc', 'status', 'docs', 'settings'].includes(hashTab)) UI.tab = hashTab;
+  $('#lock').hidden = true; document.body.classList.remove('locked');
+  render();
+  saveNow();                                      // (re)encrypts what is stored
+  const st = selfTest();
+  if (!st.every(x => x.pass)) console.error('Self-check failed', st.filter(x => !x.pass));
+}
+async function boot() {
+  const err = $('#lockErr'), pw = $('#lockPw'), card = $('#lockForm');
+  if (!VAULT || !(window.crypto && crypto.subtle)) { err.textContent = 'Ez a böngésző nem tudja megnyitni (HTTPS kell). / This browser cannot open it (needs HTTPS).'; return; }
+  if (VAULT.numeric) pw.inputMode = 'numeric';
+  const saved = (() => { try { return localStorage.getItem(KEYKEY); } catch (e) { return null; } })();
+  if (saved) {
+    try {
+      const key = await crypto.subtle.importKey('raw', unb64(saved), 'AES-GCM', true, ['encrypt', 'decrypt']);
+      const payload = await openVault(key);
+      return start(key, payload, false);
+    } catch (e) { try { localStorage.removeItem(KEYKEY); } catch (e2) { } }
+  }
+  card.onsubmit = async e => {
+    e.preventDefault();
+    const btn = card.querySelector('button'); btn.disabled = true; err.textContent = '…';
+    let key, payload;
+    try { key = await deriveKey(pw.value); payload = await openVault(key); }
+    catch (x) {
+      err.textContent = 'Hibás jelszó / Wrong password'; pw.value = ''; btn.disabled = false;
+      card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake'); pw.focus(); return;
+    }
+    err.textContent = ''; btn.disabled = false;
+    start(key, payload, $('#lockRemember').checked);
+  };
+  pw.focus();
+}
+window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (S && T.en['tabt_' + h]) { UI.tab = h; render(); } });
+boot();
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
+</script>
+</body>
+</html>
