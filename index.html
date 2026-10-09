@@ -196,6 +196,18 @@ body.locked .chrome,body.locked main{display:none}
 .chip{border:1px solid var(--rule);background:#fff;border-radius:999px;padding:8px 13px;cursor:pointer;font-size:14px;min-height:40px}
 .chip.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:700}
 .winput{width:100%;border:1px solid var(--rule);border-radius:9px;padding:9px 10px;font-size:15px;margin-top:8px;min-height:42px}
+/* Hol-Mit tab */
+.wcardm{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--green);border-radius:14px;padding:10px;margin-bottom:10px}
+.wcardm.need{border-color:var(--amber-line);background:#fffbef}
+.wcardm.off{border-color:#d6d9df;opacity:.6}
+.wmart{position:relative;width:96px;flex:0 0 96px}
+.wmart .mimg{border-radius:10px}
+.wmart .dot.big{position:absolute;left:-4px;top:-4px;width:16px;height:16px;border-radius:50%;border:2px solid #fff}
+.wminfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;font-size:14.5px}
+.wmplace{font-weight:700;color:var(--navy)}
+.warnc{color:#8a6100}
+.wmbtn{flex:0 0 auto}
+@media (max-width:480px){.wcardm{flex-wrap:wrap}.wmbtn{width:100%;min-height:48px;font-size:16px}}
 /* consolidation sheet (A4 landscape) */
 .cons-holder{margin:0 0 16px;overflow:hidden}
 .cons-page{width:297mm;height:209.5mm;padding:12mm 12mm 14mm;position:relative;background:#fff;color:#000;font-family:var(--serif);font-size:8.6pt;line-height:11pt;box-shadow:0 2px 12px rgba(0,0,0,.15);margin:0 auto;overflow:hidden}
@@ -319,6 +331,7 @@ table.t tr.tot td{background:var(--pale);font-weight:700}
   </div>
   <nav class="tabs" id="tabs">
     <button data-a="tab" data-v="days"></button>
+    <button data-a="tab" data-v="work"></button>
     <button data-a="tab" data-v="calc"></button>
     <button data-a="tab" data-v="status"></button>
     <button data-a="tab" data-v="docs"></button>
@@ -327,6 +340,7 @@ table.t tr.tot td{background:var(--pale);font-weight:700}
 </div>
 <main>
   <section id="v-days"></section>
+  <section id="v-work" hidden></section>
   <section id="v-calc" hidden></section>
   <section id="v-status" hidden></section>
   <section id="v-docs" hidden></section>
@@ -348,6 +362,7 @@ const UIKEY = 'szihalom-worklog-ui';
 /* ------------------------------------------------------------------ i18n */
 const T = {
   hu: {
+    tabt_work: 'Hol-Mit', wtIntro: 'Az ügyfél kéri: minden gépnél jelölje be, hol dolgozott és mit csinált aznap.', wtMark: 'Bejelölés', wtEdit: 'Módosítás', wtNotYet: 'Még nincs bejelölve', wtUnsaved: 'Ez a nap még nincs mentve – a jelölés a Munkanap fülön a mentéskor kerül be.', wtNoneWorked: 'Ezen a napon nem dolgozott gép.', wtMapTitle: 'Aznap a térképen', wtMapEmpty: 'Még nincs bejelölt hely ezen a napon.', wtMissingN: '{n} hiányzik', wtDone: 'kész',
     wsTitle: 'Hol és mit dolgoztak a gépek', wsMarked: 'Bejelölve', wsMachineDays: 'gépnap', wsMissing: 'Hiányzó jelölések – koppintson a napra, és a gépeknél a sárga 📍 gombbal pótolja:', wsAll: 'Minden gépnap be van jelölve.',
     workBtn: 'Hol? · Mit?', wWhere: 'Hol dolgozott?', wWhat: 'Mit csinált?', wGps: 'GPS', wFull: 'Teljes térkép',
     wMapHint: 'Koppintson arra a blokkra, ahol a gép dolgozott – utána még egyszer a pontos helyre.', wSelected: 'Hely: {b}', wOutside: 'Blokkon kívül',
@@ -437,6 +452,7 @@ const T = {
     signedBy: '{n}, {d}', dayTot: '{h} gépóra', daysCol: 'Nap',
   },
   en: {
+    tabt_work: 'Where-What', wtIntro: 'The client asks for it: for every machine, mark where it worked and what it did that day.', wtMark: 'Mark', wtEdit: 'Change', wtNotYet: 'Not marked yet', wtUnsaved: 'This day is not saved yet — the marks are stored when the day is saved on the Workday tab.', wtNoneWorked: 'No machine worked on this day.', wtMapTitle: 'That day on the map', wtMapEmpty: 'No place marked on this day yet.', wtMissingN: '{n} missing', wtDone: 'done',
     wsTitle: 'Where and what the machines worked', wsMarked: 'Marked', wsMachineDays: 'machine-days', wsMissing: 'Missing marks — tap a day, then use the yellow 📍 button on each machine:', wsAll: 'Every machine-day is marked.',
     workBtn: 'Where? · What?', wWhere: 'Where did it work?', wWhat: 'What did it do?', wGps: 'GPS', wFull: 'Whole map',
     wMapHint: 'Tap the block where the machine worked — then tap again on the exact spot.', wSelected: 'Place: {b}', wOutside: 'Outside the blocks',
@@ -526,7 +542,7 @@ const T = {
     signedBy: '{n}, {d}', dayTot: '{h} machine hours', daysCol: 'Days',
   }
 };
-const TAB_ICON = { days: '\u{1F4DD}', calc: '\u{1F9EE}', status: '\u{1F4CA}', docs: '\u{1F4C4}', settings: '\u2699\uFE0F' };
+const TAB_ICON = { days: '\u{1F4DD}', work: '\u{1F4CD}', calc: '\u{1F9EE}', status: '\u{1F4CA}', docs: '\u{1F4C4}', settings: '\u2699\uFE0F' };
 const WD = {
   hu: ['vasárnap', 'hétfő', 'kedd', 'szerda', 'csütörtök', 'péntek', 'szombat'],
   en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
@@ -773,7 +789,7 @@ function render() {
   $('#appTitle').innerHTML = `${esc(t('app'))}<small>${esc(S.po.number)}</small>`;
   document.querySelectorAll('.lang button').forEach(b => b.classList.toggle('on', b.dataset.v === S.lang));
   document.querySelectorAll('#tabs button').forEach(b => { b.innerHTML = `<span class="ti">${TAB_ICON[b.dataset.v]}</span><span class="tl">${esc(t('tabt_' + b.dataset.v))}</span>`; b.title = t('tabt_' + b.dataset.v); b.classList.toggle('on', b.dataset.v === UI.tab); });
-  for (const v of ['days', 'calc', 'status', 'docs', 'settings']) {
+  for (const v of ['days', 'work', 'calc', 'status', 'docs', 'settings']) {
     const el = $('#v-' + v); el.hidden = UI.tab !== v; el.classList.toggle('printing', UI.tab === v);
   }
   const d = draftCtx(S);
@@ -783,7 +799,7 @@ function render() {
     pill.textContent = t('stagePill', { k: d.no, n });
     pill.classList.toggle('warn', d.no > S.po.maxStages);
   } else { pill.textContent = t('allCertified'); pill.classList.remove('warn'); }
-  ({ days: renderDays, calc: renderCalc, status: renderStatus, docs: renderDocs, settings: renderSettings })[UI.tab]();
+  ({ days: renderDays, work: renderWork, calc: renderCalc, status: renderStatus, docs: renderDocs, settings: renderSettings })[UI.tab]();
 }
 
 function overWarnings(s) {
@@ -1537,6 +1553,57 @@ function renderDays() {
   el.innerHTML = html;
 }
 
+/* ---- 📍 Hol-Mit tab: one place for the crew to mark where & what */
+function renderWork() {
+  const el = $('#v-work');
+  if (!SITE) { el.innerHTML = `<div class="card muted">No site plan.</div>`; return; }
+  const sd = selDay(), src = sd.entry || UI.draft;
+  const isToday = sd.date === todayIso();
+  const working = S.machines.filter(m => Number(sd.hours[m.id]) > 0);
+  const cards = S.machines.map((m, mi) => {
+    const on = Number(sd.hours[m.id]) > 0, w = workOf(src, m.id);
+    return `<div class="wcardm${on ? '' : ' off'}${on && !w ? ' need' : ''}">
+      <div class="wmart">${machineArt(m)}<i class="dot big" style="background:${MCOL[mi % MCOL.length]}"></i></div>
+      <div class="wminfo"><b>${esc(m.name)}</b>
+        ${!on ? `<div class="muted small">${esc(t('idle'))}</div>`
+          : w ? `<div class="wmplace">\u{1F4CD} ${esc(placeText(w, S.lang) || '—')}</div><div class="small">\u{1F6E0} ${esc(workText(m, w, S.lang) || '—')}</div>`
+          : `<div class="wmplace warnc">${esc(t('wtNotYet'))}</div>`}
+      </div>
+      ${on ? `<button class="btn ${w ? '' : 'primary'} wmbtn" data-a="workM" data-m="${esc(m.id)}">\u{1F4CD} ${esc(w ? t('wtEdit') : t('wtMark'))}</button>` : ''}
+    </div>`;
+  }).join('');
+  const pins = [];
+  S.machines.forEach((m, mi) => { const w = workOf(src, m.id); if (w && w.x != null && Number(sd.hours[m.id]) > 0) pins.push({ x: w.x + mi * 12, y: w.y + mi * 12, color: MCOL[mi % MCOL.length], label: m.name.replace(/^4-axle tipper truck/, 'Tipper').replace('Tracked excavator', 'Excavator') }); });
+  let vb = fullVB();
+  if (pins.length) {
+    const x0 = Math.min(...pins.map(p => p.x)), x1 = Math.max(...pins.map(p => p.x)), y0 = Math.min(...pins.map(p => p.y)), y1 = Math.max(...pins.map(p => p.y));
+    vb = padVB([x0, y0, Math.max(x1 - x0, 500), Math.max(y1 - y0, 350)], 0.3);
+  }
+  const past = S.days.filter(d => d.date !== sd.date).slice().reverse().map(d => {
+    const ms = S.machines.filter(m => worked(d, m.id)), miss = ms.filter(m => !workOf(d, m.id)).length;
+    return `<button class="hrow" data-a="workDay" data-v="${d.date}"><span class="hd"><b>${esc(shortDate(d.date))}</b> <span class="muted">${esc(wdName(d.date))}</span></span>
+      <span class="hm muted">${ms.map(m => { const w = workOf(d, m.id); return w ? esc((w.b || '').replace('-', '/') || t('wOutside')) : '—'; }).join(' · ')}</span>
+      <span class="badge ${miss ? 'amber' : 'ok'}">${miss ? esc(t('wtMissingN', { n: miss })) : '✓ ' + esc(t('wtDone'))}</span></button>`;
+  }).join('');
+  el.innerHTML = `<div class="card">
+      <div class="row" style="align-items:center">
+        <button class="btn" data-a="workShift" data-v="-1" aria-label="-1">◀</button>
+        <div style="flex:1;text-align:center"><div class="bigdate" style="font-size:24px">${esc(shortDate(sd.date))}</div><div class="wd">${esc(wdName(sd.date))}${isToday ? ' · ' + esc(t('today')) : ''}</div></div>
+        <button class="btn" data-a="workShift" data-v="1" aria-label="+1">▶</button>
+      </div>
+      <label class="other" style="margin-top:8px">\u{1F4C5} ${esc(t('otherDay'))}<input type="date" value="${sd.date}" data-c="selDate"></label>
+      ${!sd.entry ? `<div class="alert info small" style="margin:10px 0 0">${esc(t('wtUnsaved'))}</div>` : ''}
+    </div>
+    <p class="muted" style="margin:4px 2px 10px">${esc(t('wtIntro'))}</p>
+    ${working.length ? cards : `<div class="card muted">${esc(t('wtNoneWorked'))}</div>`}
+    <div class="card"><div class="k">${esc(t('wtMapTitle'))}</div>
+      <div class="wmap" style="margin-top:6px">${siteSVG(vb, { pins })}</div>
+      ${pins.length ? '' : `<div class="small muted" style="margin-top:6px">${esc(t('wtMapEmpty'))}</div>`}
+    </div>
+    <div class="row" style="margin:4px 0 12px"><button class="btn" data-a="openCons">\u{1F4C4} ${esc(t('consTitle'))} →</button></div>
+    ${past ? `<h3 class="histh">${esc(t('history'))}</h3><div class="hist">${past}</div>` : ''}`;
+}
+
 /* ---- Status: how complete are the where/what marks */
 function workStatusBox() {
   if (!SITE) return '';
@@ -1553,7 +1620,7 @@ function workStatusBox() {
       <span class="spacer"></span><button class="btn primary" data-a="openCons">\u{1F4C4} ${esc(t('consTitle'))} →</button></div>
     <div class="bar"><i class="b1" style="width:${pct}%;background:var(--green)"></i></div>
     ${missing.length ? `<div class="small muted" style="margin:8px 0 6px">${esc(t('wsMissing'))}</div>
-      <div class="chips">${missing.map(({ d, n }) => `<button class="chip" data-a="pickDay" data-v="${d.date}">${esc(shortDate(d.date))} <span class="muted">(${n})</span></button>`).join('')}</div>`
+      <div class="chips">${missing.map(({ d, n }) => `<button class="chip" data-a="workDayGo" data-v="${d.date}">${esc(shortDate(d.date))} <span class="muted">(${n})</span></button>`).join('')}</div>`
       : `<div class="alert ok small" style="margin:8px 0 0">✓ ${esc(t('wsAll'))}</div>`}
   </div>`;
 }
@@ -2058,6 +2125,13 @@ const actions = {
   tab(b) { UI.tab = b.dataset.v; history.replaceState(null, '', '#' + UI.tab); saveNow(); render(); window.scrollTo(0, 0); },
   lang(b) { S.lang = b.dataset.v; save(); render(); },
   pickDay(b) { UI.sel = b.dataset.v; UI.tab = 'days'; render(); window.scrollTo(0, 0); },
+  workDayGo(b) { UI.sel = b.dataset.v; UI.tab = 'work'; render(); window.scrollTo(0, 0); },
+  workDay(b) { UI.sel = b.dataset.v; render(); window.scrollTo(0, 0); },
+  workShift(b) {
+    const ds = S.days.map(d => d.date), cur = selDay().date, k = Number(b.dataset.v);
+    const next = k < 0 ? ds.filter(d => d < cur).at(-1) : ds.filter(d => d > cur)[0];
+    UI.sel = next || addDays(cur, k); render();
+  },
   openCons() { UI.docKind = 'cons'; UI.docStage = null; UI.tab = 'docs'; render(); window.scrollTo(0, 0); },
   toggleM(b) { setHours(b.dataset.m, h => h > 0 ? 0 : baseH()); },
   stepH(b) { setHours(b.dataset.m, h => Math.max(0.5, Math.min(24, h + Number(b.dataset.v)))); },
@@ -2278,7 +2352,7 @@ async function start(key, payload, remember) {
   try { Object.assign(UI, JSON.parse(localStorage.getItem(UIKEY) || '{}')); } catch (e) { }
   UI.docStage = null;
   const hashTab = location.hash.slice(1);
-  if (['days', 'calc', 'status', 'docs', 'settings'].includes(hashTab)) UI.tab = hashTab;
+  if (['days', 'work', 'calc', 'status', 'docs', 'settings'].includes(hashTab)) UI.tab = hashTab;
   $('#lock').hidden = true; document.body.classList.remove('locked');
   render();
   saveNow();                                      // (re)encrypts what is stored
