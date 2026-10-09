@@ -196,6 +196,24 @@ body.locked .chrome,body.locked main{display:none}
 .chip{border:1px solid var(--rule);background:#fff;border-radius:999px;padding:8px 13px;cursor:pointer;font-size:14px;min-height:40px}
 .chip.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:700}
 .winput{width:100%;border:1px solid var(--rule);border-radius:9px;padding:9px 10px;font-size:15px;margin-top:8px;min-height:42px}
+#v-print{display:none}
+.trv{color:var(--navy);font-weight:700}
+.whead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.scrollx{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+.scrollx>*{flex:0 0 auto}
+.chipdate{display:inline-flex;align-items:center;gap:4px;padding:4px 8px}
+.chipdate input{border:0;background:none;font-size:14px;max-width:130px}
+.mpick{display:flex;gap:8px;margin-top:6px}
+.mp{width:108px;border:2px solid var(--rule);border-radius:12px;background:#fff;padding:4px 4px 6px;cursor:pointer;display:flex;flex-direction:column;gap:3px;align-items:stretch;text-align:center;font-size:12.5px;font-weight:700;position:relative}
+.mp .mimg{border-radius:8px}
+.mp i{font-style:normal;font-size:12px;color:var(--grey);font-weight:400}
+.mp.on{border-color:var(--navy);background:var(--pale)}
+.mp.idle{opacity:.45;cursor:not-allowed}
+.stoptabs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chip.add{border-style:dashed;color:var(--navy);font-weight:700}
+.chip.del{color:var(--red);border-color:#e7b4ae}
+.travel{margin-top:12px;background:var(--pale);border-radius:10px;padding:10px 12px;color:var(--navy)}
+.wfoot{position:sticky;bottom:-16px;background:#fff;padding:10px 0 4px;margin-top:12px;border-top:1px solid var(--rule)}
 /* Hol-Mit tab */
 .wcardm{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--green);border-radius:14px;padding:10px;margin-bottom:10px}
 .wcardm.need{border-color:var(--amber-line);background:#fffbef}
@@ -302,6 +320,7 @@ table.t tr.tot td{background:var(--pale);font-weight:700}
   .sheet-page svg{width:297mm;height:210mm}
   .xdoc-holder{page:port;margin:0;break-after:page}
   .cons-holder{page:land;margin:0;break-after:page}
+  #v-print.printing{display:block!important}
   .cons-page{zoom:1!important;box-shadow:none;margin:0}
   .xdoc{zoom:1!important;box-shadow:none;margin:0;height:296.5mm;min-height:0;overflow:hidden}
   .docs-out>:last-child{break-after:auto}
@@ -345,6 +364,7 @@ table.t tr.tot td{background:var(--pale);font-weight:700}
   <section id="v-status" hidden></section>
   <section id="v-docs" hidden></section>
   <section id="v-settings" hidden></section>
+  <section id="v-print"></section>
 </main>
 <div class="modal" id="modal" hidden></div>
 <div id="toast"></div>
@@ -362,6 +382,14 @@ const UIKEY = 'szihalom-worklog-ui';
 /* ------------------------------------------------------------------ i18n */
 const T = {
   hu: {
+    wTitle: 'Hol és mit dolgozott?', wStepDay: 'Nap', wStepMachine: 'Gép', wStepWhere: 'Hol dolgozott? (ha több helyen: + Új hely)', wStepWhat: 'Mit csinált itt? ({n}. hely)',
+    wNewPlace: 'új hely', wAddPlace: 'Új hely', wPrevPlace: 'tegnap', wNotWorking: 'Ez a gép ezen a napon nem dolgozott (Munkanap fül).',
+    wTravel: 'Mozgás a helyek között', wTravelNote: 'Becslés: légvonal × {f}, {v} km/h haladással.', wTravelPrev: 'Az előző munkanap utolsó helyétől számolva.',
+    wDone: 'Kész', wNextMachine: 'Következő gép', wAllDone: 'Minden gép be van jelölve ezen a napon.',
+    wtStart: 'Bejelölés indítása ({n} gép hiányzik)', wtAllMarked: 'Minden gép bejelölve – módosítás',
+    repTitle: 'Jelentés küldése', repIntro: 'Elkészíti a hol-mit összesítőt, és elküldheti (WhatsApp, e-mail).', rep_day: 'Ez a nap', rep_week: 'Ez a hét', rep_all: 'Minden nap',
+    repExcel: 'Excel', repPdf: 'PDF', repPdfHint: 'PDF: a nyomtatás ablakban válassza a „Mentés PDF-ként” lehetőséget, majd küldje el a fájlt.', repEmpty: 'Ebben az időszakban nincs rögzített nap.',
+    sSpeeds: 'Haladási sebesség a telepen', speedsHint: 'A helyek közötti mozgás idejének becsléséhez (lassú gépek).',
     tabt_work: 'Hol-Mit', wtIntro: 'Az ügyfél kéri: minden gépnél jelölje be, hol dolgozott és mit csinált aznap.', wtMark: 'Bejelölés', wtEdit: 'Módosítás', wtNotYet: 'Még nincs bejelölve', wtUnsaved: 'Ez a nap még nincs mentve – a jelölés a Munkanap fülön a mentéskor kerül be.', wtNoneWorked: 'Ezen a napon nem dolgozott gép.', wtMapTitle: 'Aznap a térképen', wtMapEmpty: 'Még nincs bejelölt hely ezen a napon.', wtMissingN: '{n} hiányzik', wtDone: 'kész',
     wsTitle: 'Hol és mit dolgoztak a gépek', wsMarked: 'Bejelölve', wsMachineDays: 'gépnap', wsMissing: 'Hiányzó jelölések – koppintson a napra, és a gépeknél a sárga 📍 gombbal pótolja:', wsAll: 'Minden gépnap be van jelölve.',
     workBtn: 'Hol? · Mit?', wWhere: 'Hol dolgozott?', wWhat: 'Mit csinált?', wGps: 'GPS', wFull: 'Teljes térkép',
@@ -452,6 +480,14 @@ const T = {
     signedBy: '{n}, {d}', dayTot: '{h} gépóra', daysCol: 'Nap',
   },
   en: {
+    wTitle: 'Where and what did it work?', wStepDay: 'Day', wStepMachine: 'Machine', wStepWhere: 'Where did it work? (more places: + New place)', wStepWhat: 'What did it do here? (place {n})',
+    wNewPlace: 'new place', wAddPlace: 'New place', wPrevPlace: 'yesterday', wNotWorking: 'This machine did not work on this day (Workday tab).',
+    wTravel: 'Travel between places', wTravelNote: 'Estimate: straight line × {f} at {v} km/h.', wTravelPrev: 'Counted from the last place of the previous working day.',
+    wDone: 'Done', wNextMachine: 'Next machine', wAllDone: 'Every machine is marked for this day.',
+    wtStart: 'Start marking ({n} machines missing)', wtAllMarked: 'All machines marked — change',
+    repTitle: 'Send a report', repIntro: 'Builds the where-what summary for you to send (WhatsApp, e-mail).', rep_day: 'This day', rep_week: 'This week', rep_all: 'All days',
+    repExcel: 'Excel', repPdf: 'PDF', repPdfHint: 'PDF: in the print window choose “Save as PDF”, then send the file.', repEmpty: 'No recorded day in this period.',
+    sSpeeds: 'Travel speed on site', speedsHint: 'Used to estimate the time spent moving between places (slow machines).',
     tabt_work: 'Where-What', wtIntro: 'The client asks for it: for every machine, mark where it worked and what it did that day.', wtMark: 'Mark', wtEdit: 'Change', wtNotYet: 'Not marked yet', wtUnsaved: 'This day is not saved yet — the marks are stored when the day is saved on the Workday tab.', wtNoneWorked: 'No machine worked on this day.', wtMapTitle: 'That day on the map', wtMapEmpty: 'No place marked on this day yet.', wtMissingN: '{n} missing', wtDone: 'done',
     wsTitle: 'Where and what the machines worked', wsMarked: 'Marked', wsMachineDays: 'machine-days', wsMissing: 'Missing marks — tap a day, then use the yellow 📍 button on each machine:', wsAll: 'Every machine-day is marked.',
     workBtn: 'Where? · What?', wWhere: 'Where did it work?', wWhat: 'What did it do?', wGps: 'GPS', wFull: 'Whole map',
@@ -605,6 +641,7 @@ function normalize(o) {
   s.numbering = Object.assign({}, b.numbering, o.numbering);
   s.signers = Object.assign({}, b.signers, o.signers);
   s.prices = Object.assign({}, b.prices, o.prices);
+  s.speeds = Object.assign({}, SPEED_DEF, b.speeds, o.speeds);
   const KIND_BY_LINE = { dozer: 'dozer', exc: 'excavator', tip: 'tipper' };
   s.machines = (o.machines || b.machines).map(m => ({ type: '', inv: '', operator: '', ...m, kind: m.kind || KIND_BY_LINE[m.line] || 'other' }));
   s.machines.forEach(m => { if (m.rate === undefined || m.rate === '') m.rate = defaultRate(s, m); });
@@ -776,7 +813,7 @@ function hashStr(str) { let h = 2166136261; for (let i = 0; i < str.length; i++)
 function dayKey(d) {
   const w = d.work || {};
   const marks = Object.keys(w).sort().filter(k => !emptyWork(w[k]))     // empty = nothing added, so older signatures stay valid
-    .map(k => { const x = w[k]; return `${k}@${x.b || ''}:${x.x ?? ''},${x.y ?? ''}:${(x.acts || []).join('+')}:${x.place || ''}:${x.note || ''}`; });
+    .map(k => `${k}@` + stopsOf(w[k]).map(x => `${x.b || ''}:${x.x ?? ''},${x.y ?? ''}:${(x.acts || []).join('+')}:${x.place || ''}:${x.note || ''}`).join('>'));
   return [d.date, Number(d.start), ...Object.keys(d.hours).sort().map(k => k + ':' + Number(d.hours[k] || 0)), ...marks].join('|');
 }
 const dayHash = d => hashStr(dayKey(d));
@@ -1232,11 +1269,13 @@ function openImportChoice(o) {
 }
 
 /* ------------------------------------------------ Where & what, per day
-   For each machine and day the crew marks WHERE it worked (a block of the
-   site plan, a point on it, or GPS) and WHAT it did (quick buttons per
-   machine type + free text). It is part of the signed day and feeds the
-   client's daily work consolidation. Site plan: vault "site" (local metres,
-   y down), from the grass-cutting drawing (UTM 34N). */
+   For each machine and day the crew marks one or more STOPS — where it
+   worked (block of the site plan / a point / GPS) and what it did there.
+   Travel between stops (and from the previous working day's last place) is
+   estimated: straight line x ROAD_F, at the machine's typical speed. All of
+   it is part of the signed day and feeds the client's consolidation.
+   Site plan: vault "site" (local metres, y down), from the grass-cutting
+   drawing (UTM 34N). Older single-place marks ({b, x, y, …}) read as one stop. */
 let SITE = null;
 const ACTS = {
   dozer: [['grade', 'Tereprendezés, planírozás', 'Site levelling / grading'], ['road', 'Útépítés, útjavítás', 'Access road construction / repair'],
@@ -1254,13 +1293,19 @@ function actLabel(m, key, lang) {
   const a = actList(m).find(x => x[0] === key) || Object.values(ACTS).flat().find(x => x[0] === key);
   return a ? (lang === 'en' ? a[2] : a[1]) : key;
 }
-const emptyWork = w => !w || (!w.b && w.x == null && !(w.acts || []).length && !w.note && !w.place);
+const stopEmpty = s => !s || (!s.b && s.x == null && !(s.acts || []).length && !s.note && !s.place);
+const stopsOf = w => !w ? [] : (Array.isArray(w.stops) ? w.stops : [w]).filter(s => !stopEmpty(s));
+const emptyWork = w => stopsOf(w).length === 0;
 const workOf = (src, mid) => (src && src.work && !emptyWork(src.work[mid])) ? src.work[mid] : null;
-const workText = (m, w, lang) => w ? [...(w.acts || []).map(k => actLabel(m, k, lang)), w.note].filter(Boolean).join(', ') : '';
-function placeText(w, lang) {
-  if (!w) return '';
-  const where = w.b ? w.b.replace('-', '/') : (w.x != null ? (lang === 'en' ? 'Outside the blocks' : 'Blokkon kívül') : '');
-  return [where, w.place].filter(Boolean).join(' – ');
+function placeOne(s, lang) {
+  const where = s.b ? s.b.replace('-', '/') : (s.x != null ? (lang === 'en' ? 'Outside the blocks' : 'Blokkon kívül') : '');
+  return [where, s.place].filter(Boolean).join(' – ');
+}
+const workOne = (m, s, lang) => [...(s.acts || []).map(k => actLabel(m, k, lang)), s.note].filter(Boolean).join(', ');
+const placeText = (w, lang) => stopsOf(w).map(s => placeOne(s, lang)).filter(Boolean).join(' → ');
+function workText(m, w, lang) {
+  const st = stopsOf(w);
+  return st.length > 1 ? st.map((s, i) => `${i + 1}. ${workOne(m, s, lang) || '—'}`).join('; ') : (st[0] ? workOne(m, st[0], lang) : '');
 }
 function pip(x, y, r) {
   let c = false;
@@ -1278,94 +1323,189 @@ function blockBox(b) {
 }
 const fullVB = () => [0, 0, SITE.w, SITE.h];
 function padVB([x, y, w, h], k = 0.35) { const m = Math.max(w, h) * k + 40; return [x - m, y - m, w + 2 * m, h + 2 * m]; }
-function siteSVG(vb, { sel = '', pins = [], extra = '', attrs = '' } = {}) {
+function boxOf(pts, minW = 500, minH = 350) {
+  const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+  const x0 = Math.min(...xs), y0 = Math.min(...ys);
+  return [x0, y0, Math.max(Math.max(...xs) - x0, minW), Math.max(Math.max(...ys) - y0, minH)];
+}
+function siteSVG(vb, { sel = '', pins = [], lines = [], attrs = '', pinDiv = 70 } = {}) {
   const fs = Math.max(vb[2], vb[3] * 1.4) / 58, sw = vb[2] / 500;
   const blocks = SITE.blocks.map(b => {
     const [bx, by, bw, bh] = blockBox(b), on = b.id === sel;
     return `<g class="blk${on ? ' on' : ''}" data-b="${b.id}">${b.rings.map(r => `<polygon points="${r.join(' ')}" stroke-width="${sw}"/>`).join('')}
       <text x="${bx + bw / 2}" y="${by + bh / 2}" font-size="${fs}" text-anchor="middle" dominant-baseline="middle">${b.label}</text></g>`;
   }).join('');
-  const pr = vb[2] / 70;
-  const pinsSvg = pins.map(p => `<g class="pin"><circle cx="${p.x}" cy="${p.y}" r="${pr}" fill="${p.color || '#B42318'}" stroke="#fff" stroke-width="${pr / 3}"/>${p.label ? `<text x="${p.x + pr * 1.4}" y="${p.y + pr * 0.45}" font-size="${pr * 1.5}" fill="${p.color || '#B42318'}">${esc(p.label)}</text>` : ''}</g>`).join('');
-  return `<svg class="sitemap" viewBox="${vb.map(n => +n.toFixed(1)).join(' ')}" ${attrs} xmlns="http://www.w3.org/2000/svg">${blocks}${extra}${pinsSvg}</svg>`;
+  const pr = vb[2] / pinDiv;
+  const linesSvg = lines.map(l => `<polyline points="${l.pts.map(p => p.join(',')).join(' ')}" fill="none" stroke="${l.color || '#B42318'}" stroke-width="${pr / 2.2}" stroke-dasharray="${pr * 1.2} ${pr * 0.8}" stroke-linecap="round" opacity=".85"/>`).join('');
+  const pinsSvg = pins.map(p => `<g class="pin"><circle cx="${p.x}" cy="${p.y}" r="${pr * (p.big ? 1.35 : 1)}" fill="${p.color || '#B42318'}" stroke="#fff" stroke-width="${pr / 3}"/>`
+    + (p.num ? `<text x="${p.x}" y="${p.y}" font-size="${pr * 1.25}" fill="#fff" text-anchor="middle" dominant-baseline="central" style="stroke:none">${esc(p.num)}</text>` : '')
+    + (p.label ? `<text x="${p.x + pr * 1.6}" y="${p.y + pr * 0.45}" font-size="${pr * 1.5}" fill="${p.color || '#B42318'}">${esc(p.label)}</text>` : '') + `</g>`).join('');
+  return `<svg class="sitemap" viewBox="${vb.map(n => +n.toFixed(1)).join(' ')}" ${attrs} xmlns="http://www.w3.org/2000/svg">${blocks}${linesSvg}${pinsSvg}</svg>`;
 }
+
+/* ---- travel between stops (estimate) */
+const SPEED_DEF = { dozer: 3, excavator: 3, tipper: 15, other: 5 };     // km/h on site
+const ROAD_F = 1.25;                                                     // straight line -> around the panel rows
+const speedOf = m => Number(S.speeds?.[m.kind]) || SPEED_DEF[m.kind] || 5;
+function prevStop(date, mid) {
+  const d = S.days.filter(x => x.date < date && worked(x, mid) && stopsOf(workOf(x, mid)).some(s => s.x != null)).at(-1);
+  return d ? { date: d.date, s: stopsOf(d.work[mid]).filter(s => s.x != null).at(-1) } : null;
+}
+function travelOf(date, m, w) {
+  const st = stopsOf(w).filter(s => s.x != null), legs = [];
+  const pv = prevStop(date, m.id);
+  if (pv && st.length) { const d = Math.hypot(pv.s.x - st[0].x, pv.s.y - st[0].y); if (d > 40) legs.push({ from: pv.s, to: st[0], m: d, prev: pv.date }); }
+  for (let i = 1; i < st.length; i++) legs.push({ from: st[i - 1], to: st[i], m: Math.hypot(st[i].x - st[i - 1].x, st[i].y - st[i - 1].y) });
+  const straight = legs.reduce((a, l) => a + l.m, 0), km = straight * ROAD_F / 1000;
+  return { legs, km, min: km / speedOf(m) * 60, prev: pv };
+}
+function travelText(tr, lang) {
+  if (!tr || !tr.legs.length || tr.km < 0.05) return '';
+  const km = (Math.round(tr.km * 10) / 10).toFixed(1), kmS = lang === 'en' ? km : km.replace('.', ',');
+  const h = Math.floor(tr.min / 60), mn = Math.round(tr.min % 60);
+  const time = h ? (lang === 'en' ? `${h} h ${mn} min` : `${h} óra ${mn} perc`) : (lang === 'en' ? `${mn} min` : `${mn} perc`);
+  return `${kmS} km · ~${time}`;
+}
+
+/* ---- the marking window: ① day ② machine ③ where (one or more places) ④ what */
 function openWork(mid) {
   if (!SITE) return toast('No site plan');
-  const sd = selDay(), m = S.machines.find(x => x.id === mid);
-  const src = sd.entry || UI.draft;
-  const cur = Object.assign({ b: '', x: null, y: null, acts: [], note: '', place: '' }, clone((src.work || {})[mid] || {}));
-  let vb = cur.b ? padVB(blockBox(SITE.blocks.find(b => b.id === cur.b) || { rings: [[0, 0, SITE.w, SITE.h]] })) : fullVB();
   const md = $('#modal');
-  md.innerHTML = `<div class="mcard wcard" role="dialog" aria-modal="true">
-    <h3>\u{1F4CD} ${esc(m.name)}</h3><div class="muted small">${esc(uiDate(sd.date))} (${esc(wdName(sd.date))})</div>
-    <div class="k" style="margin-top:10px">${esc(t('wWhere'))}</div>
-    <div class="wmap"><div id="wMap"></div>
-      <div class="wmapbtns"><button class="btn sm" id="wGps">\u{1F4CD} ${esc(t('wGps'))}</button><button class="btn sm" id="wFull">\u{1F50D} ${esc(t('wFull'))}</button></div></div>
-    <div class="wsel" id="wSel"></div>
-    <div class="chips" id="wBlocks">${SITE.blocks.map(b => `<button type="button" class="chip" data-b="${b.id}">${b.label}</button>`).join('')}<button type="button" class="chip" data-b="">${esc(t('wOutside'))}</button></div>
-    <input class="winput" id="wPlace" type="text" placeholder="${esc(t('wPlacePh'))}" value="${esc(cur.place)}">
-    <div class="k" style="margin-top:14px">${esc(t('wWhat'))}</div>
-    <div class="chips" id="wActs">${actList(m).map(([k, hu, en]) => `<button type="button" class="chip act" data-k="${k}">${esc(S.lang === 'en' ? en : hu)}</button>`).join('')}</div>
-    <input class="winput" id="wNote" type="text" placeholder="${esc(t('wNotePh'))}" value="${esc(cur.note)}">
-    <div class="row" style="margin-top:14px"><button class="btn" id="wSame">↻ ${esc(t('wSame'))}</button><span class="spacer"></span>
-      <button class="btn" id="wCancel">${esc(t('cancel'))}</button><button class="btn primary" id="wSave">${esc(t('save'))}</button></div>
-  </div>`;
-  md.hidden = false; document.body.style.overflow = 'hidden';
-  const close = () => { md.hidden = true; md.innerHTML = ''; document.body.style.overflow = ''; };
+  const ed = { mid, si: 0, stops: [], vb: null };
+  const curDay = () => selDay();
+  const srcOf = () => { const sd = curDay(); return sd.entry || UI.draft; };
+  const mach = () => S.machines.find(x => x.id === ed.mid);
+  const newStop = () => ({ b: '', x: null, y: null, acts: [], note: '', place: '' });
+  const load = () => {
+    const w = (srcOf().work || {})[ed.mid];
+    ed.stops = clone(stopsOf(w)); if (!ed.stops.length) ed.stops = [newStop()];
+    ed.si = 0; ed.vb = null;
+  };
+  const persist = () => {
+    const sd = curDay(), src = srcOf(), keep = ed.stops.filter(s => !stopEmpty(s));
+    const before = JSON.stringify(stopsOf((src.work || {})[ed.mid])), after = JSON.stringify(keep);
+    if (before === after) return true;
+    if (sd.entry && !guardDayEdit(sd.entry)) return false;
+    src.work ||= {};
+    if (keep.length) src.work[ed.mid] = { stops: keep }; else delete src.work[ed.mid];
+    if (sd.entry) { sortAll(S); save(); }
+    return true;
+  };
+  const close = () => { md.hidden = true; md.innerHTML = ''; document.body.style.overflow = ''; render(); };
+  const stop = () => ed.stops[ed.si];
+  const viewFor = () => {
+    const pts = ed.stops.filter(s => s.x != null);
+    if (ed.vb) return ed.vb;
+    if (stop().b && stop().x == null) return padVB(blockBox(SITE.blocks.find(b => b.id === stop().b)));
+    return pts.length ? padVB(boxOf(pts, 400, 300), 0.4) : fullVB();
+  };
+  const dayList = () => {
+    const ds = [...new Set([todayIso(), ...S.days.map(d => d.date)])].sort().reverse().slice(0, 14);
+    if (!ds.includes(curDay().date)) ds.unshift(curDay().date);
+    return ds;
+  };
   const draw = () => {
-    $('#wMap').innerHTML = siteSVG(vb, { sel: cur.b, pins: cur.x != null ? [{ x: cur.x, y: cur.y }] : [] });
-    $('#wSel').innerHTML = cur.b || cur.x != null ? `✓ ${esc(t('wSelected', { b: placeText(cur, S.lang) || t('wOutside') }))}` : `<span class="muted">${esc(t('wMapHint'))}</span>`;
-    md.querySelectorAll('#wBlocks .chip').forEach(c => c.classList.toggle('on', c.dataset.b === cur.b && (cur.b !== '' || cur.x != null)));
-    md.querySelectorAll('#wActs .chip').forEach(c => c.classList.toggle('on', cur.acts.includes(c.dataset.k)));
+    const sd = curDay(), src = srcOf(), m = mach(), s = stop();
+    const workingNow = Number(sd.hours[m.id]) > 0;
+    const prev = prevStop(sd.date, m.id);
+    const pts = ed.stops.map((x, i) => ({ ...x, i })).filter(x => x.x != null);
+    const pins = pts.map(p => ({ x: p.x, y: p.y, num: String(p.i + 1), color: p.i === ed.si ? '#B42318' : '#17385D', big: p.i === ed.si }));
+    const lines = [];
+    if (pts.length > 1) lines.push({ pts: pts.map(p => [p.x, p.y]), color: '#17385D' });
+    if (prev && pts.length) { pins.unshift({ x: prev.s.x, y: prev.s.y, color: '#8a8f99', label: t('wPrevPlace') }); lines.push({ pts: [[prev.s.x, prev.s.y], [pts[0].x, pts[0].y]], color: '#8a8f99' }); }
+    const tr = travelOf(sd.date, m, { stops: ed.stops });
+    md.innerHTML = `<div class="mcard wcard" role="dialog" aria-modal="true">
+      <div class="whead"><h3>\u{1F4CD} ${esc(t('wTitle'))}</h3><button class="btn ghost sm" id="eX" aria-label="${esc(t('cancel'))}">✕</button></div>
+      <div class="k">① ${esc(t('wStepDay'))}</div>
+      <div class="chips scrollx" id="eDays">${dayList().map(d => `<button type="button" class="chip${d === sd.date ? ' on' : ''}" data-d="${d}">${d === todayIso() ? esc(t('today')).replace(/^./, c => c.toUpperCase()) + ' · ' : ''}${esc(shortDate(d))}</button>`).join('')}
+        <label class="chip chipdate">\u{1F4C5}<input type="date" id="eDate" value="${sd.date}" aria-label="${esc(t('otherDay'))}"></label></div>
+      <div class="k" style="margin-top:12px">② ${esc(t('wStepMachine'))}</div>
+      <div class="mpick scrollx">${S.machines.map((x, i) => { const on = Number(sd.hours[x.id]) > 0, done = !!workOf(src, x.id);
+        return `<button type="button" class="mp${x.id === ed.mid ? ' on' : ''}${on ? '' : ' idle'}" data-m="${esc(x.id)}" ${on ? '' : 'disabled'}>${machineArt(x)}<span>${esc(x.name)}</span><i>${on ? (done ? '✓' : '○') : esc(t('idle'))}</i></button>`; }).join('')}</div>
+      ${!workingNow ? `<div class="alert warn small" style="margin-top:10px">${esc(t('wNotWorking'))}</div>` : `
+      <div class="k" style="margin-top:12px">③ ${esc(t('wStepWhere'))}</div>
+      <div class="stoptabs">${ed.stops.map((x, i) => `<button type="button" class="chip stab${i === ed.si ? ' on' : ''}" data-si="${i}">${i + 1}. ${esc(placeOne(x, S.lang) || t('wNewPlace'))}</button>`).join('')}
+        <button type="button" class="chip add" id="eAdd">+ ${esc(t('wAddPlace'))}</button>
+        ${ed.stops.length > 1 ? `<button type="button" class="chip del" id="eDel">\u{1F5D1} ${ed.si + 1}.</button>` : ''}</div>
+      <div class="wmap"><div id="wMap">${siteSVG(viewFor(), { sel: s.b, pins, lines, pinDiv: 36 })}</div>
+        <div class="wmapbtns"><button class="btn sm" id="wGps">\u{1F4CD} ${esc(t('wGps'))}</button><button class="btn sm" id="wFull">\u{1F50D} ${esc(t('wFull'))}</button></div></div>
+      <div class="wsel">${s.b || s.x != null ? `✓ ${esc(t('wSelected', { b: `${ed.si + 1}. ${placeOne(s, S.lang) || t('wOutside')}` }))}` : `<span class="muted">${esc(t('wMapHint'))}</span>`}</div>
+      <div class="chips" id="wBlocks">${SITE.blocks.map(b => `<button type="button" class="chip${b.id === s.b ? ' on' : ''}" data-b="${b.id}">${b.label}</button>`).join('')}<button type="button" class="chip${!s.b && s.x != null ? ' on' : ''}" data-b="">${esc(t('wOutside'))}</button></div>
+      <input class="winput" id="wPlace" type="text" placeholder="${esc(t('wPlacePh'))}" value="${esc(s.place)}">
+      <div class="k" style="margin-top:14px">④ ${esc(t('wStepWhat', { n: ed.si + 1 }))}</div>
+      <div class="chips" id="wActs">${actList(m).map(([k, hu, en]) => `<button type="button" class="chip act${s.acts.includes(k) ? ' on' : ''}" data-k="${k}">${esc(S.lang === 'en' ? en : hu)}</button>`).join('')}</div>
+      <input class="winput" id="wNote" type="text" placeholder="${esc(t('wNotePh'))}" value="${esc(s.note)}">
+      ${travelText(tr, S.lang) ? `<div class="travel">\u{1F69C} ${esc(t('wTravel'))}: <b>${esc(travelText(tr, S.lang))}</b><div class="small muted">${esc(t('wTravelNote', { v: speedOf(m), f: String(ROAD_F).replace('.', S.lang === 'en' ? '.' : ',') }))}${tr.legs.some(l => l.prev) ? ' ' + esc(t('wTravelPrev')) : ''}</div></div>` : ''}`}
+      <div class="row wfoot"><button class="btn" id="wSame">↻ ${esc(t('wSame'))}</button><span class="spacer"></span>
+        <button class="btn" id="wDone">✓ ${esc(t('wDone'))}</button><button class="btn primary" id="wNext">${esc(t('wNextMachine'))} →</button></div>
+    </div>`;
+    bind();
+  };
+  const go = fn => { if (!persist()) return; fn(); draw(); };
+  const bind = () => {
+    $('#eX').onclick = () => { persist(); close(); };
+    md.querySelectorAll('#eDays .chip[data-d]').forEach(c => c.onclick = () => go(() => { UI.sel = c.dataset.d; load(); }));
+    $('#eDate').onchange = e => { if (ISO_RE.test(e.target.value)) go(() => { UI.sel = e.target.value; load(); }); };
+    md.querySelectorAll('.mp').forEach(c => c.onclick = () => go(() => { ed.mid = c.dataset.m; load(); }));
+    $('#wSame').onclick = () => {
+      const sd = curDay(), prev = S.days.filter(d => d.date < sd.date && workOf(d, ed.mid)).at(-1);
+      if (!prev) return toast(t('wNoPrev'));
+      ed.stops = clone(stopsOf(prev.work[ed.mid])); ed.si = 0; ed.vb = null; draw();
+    };
+    $('#wDone').onclick = () => { if (persist()) close(); };
+    $('#wNext').onclick = () => go(() => {
+      const sd = curDay(), src = srcOf(), list = S.machines.filter(x => Number(sd.hours[x.id]) > 0);
+      const i = list.findIndex(x => x.id === ed.mid);
+      const next = list.slice(i + 1).concat(list.slice(0, i)).find(x => !workOf(src, x.id)) || list[(i + 1) % list.length];
+      if (!next || next.id === ed.mid) { toast(t('wAllDone')); return; }
+      ed.mid = next.id; load();
+    });
+    if (!$('#wMap')) return;
+    md.querySelectorAll('.stab').forEach(c => c.onclick = () => { ed.si = Number(c.dataset.si); ed.vb = null; draw(); });
+    $('#eAdd').onclick = () => { ed.stops.push(newStop()); ed.si = ed.stops.length - 1; ed.vb = null; draw(); };
+    if ($('#eDel')) $('#eDel').onclick = () => { ed.stops.splice(ed.si, 1); ed.si = Math.max(0, ed.si - 1); ed.vb = null; draw(); };
     const svg = $('#wMap svg');
     svg.addEventListener('click', e => {
       const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY;
       const q = p.matrixTransform(svg.getScreenCTM().inverse());
-      const b = blockAt(q.x, q.y);
-      cur.x = Math.round(q.x); cur.y = Math.round(q.y); cur.b = b ? b.id : '';
-      if (b && vb[2] > blockBox(b)[2] * 3) vb = padVB(blockBox(b));          // first tap zooms in, the next ones place the pin
+      const b = blockAt(q.x, q.y), s = stop(), vb = viewFor();
+      s.x = Math.round(q.x); s.y = Math.round(q.y); s.b = b ? b.id : '';
+      ed.vb = (b && vb[2] > blockBox(b)[2] * 3) ? padVB(blockBox(b)) : vb;     // first tap zooms in, then place exactly
       draw();
     });
+    md.querySelectorAll('#wBlocks .chip').forEach(c => c.onclick = () => {
+      const s = stop(), b = SITE.blocks.find(x => x.id === c.dataset.b);
+      s.b = c.dataset.b;
+      if (b) { const [x, y, w, h] = blockBox(b); if (!(s.x != null && blockAt(s.x, s.y) === b)) { s.x = Math.round(x + w / 2); s.y = Math.round(y + h / 2); } ed.vb = padVB([x, y, w, h]); }
+      else if (s.x != null && blockAt(s.x, s.y)) s.x = s.y = null;
+      draw();
+    });
+    md.querySelectorAll('#wActs .chip').forEach(c => c.onclick = () => {
+      const s = stop(), k = c.dataset.k; s.acts = s.acts.includes(k) ? s.acts.filter(x => x !== k) : [...s.acts, k]; c.classList.toggle('on');
+      const tab = md.querySelector(`.stab[data-si="${ed.si}"]`); if (tab) tab.textContent = `${ed.si + 1}. ${placeOne(s, S.lang) || t('wNewPlace')}`;
+    });
+    $('#wPlace').oninput = e => { stop().place = e.target.value.trim(); };
+    $('#wNote').oninput = e => { stop().note = e.target.value.trim(); };
+    $('#wFull').onclick = () => { ed.vb = fullVB(); draw(); };
+    $('#wGps').onclick = () => {
+      if (!navigator.geolocation) return toast(t('wGpsErr'));
+      $('#wGps').disabled = true;
+      navigator.geolocation.getCurrentPosition(pos => {
+        const [E, N] = wgsToUtm34(pos.coords.latitude, pos.coords.longitude);
+        const x = Math.round(E - SITE.ox), y = Math.round(SITE.h - (N - SITE.oy));
+        if (x < 0 || y < 0 || x > SITE.w || y > SITE.h) { $('#wGps').disabled = false; toast(t('wGpsOff')); return; }
+        const s = stop(), b = blockAt(x, y);
+        Object.assign(s, { x, y, b: b ? b.id : '', gps: { E: Math.round(E), N: Math.round(N), acc: Math.round(pos.coords.accuracy) } });
+        ed.vb = padVB(b ? blockBox(b) : [x - 150, y - 150, 300, 300]); draw();
+      }, () => { $('#wGps').disabled = false; toast(t('wGpsErr')); }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
+    };
   };
-  md.querySelectorAll('#wBlocks .chip').forEach(c => c.onclick = () => {
-    const b = SITE.blocks.find(x => x.id === c.dataset.b);
-    cur.b = c.dataset.b;
-    if (b) { const [x, y, w, h] = blockBox(b); if (!(cur.x != null && blockAt(cur.x, cur.y) === b)) { cur.x = Math.round(x + w / 2); cur.y = Math.round(y + h / 2); } vb = padVB([x, y, w, h]); }
-    else { cur.x = cur.x != null && !blockAt(cur.x, cur.y) ? cur.x : null; }
-    draw();
-  });
-  md.querySelectorAll('#wActs .chip').forEach(c => c.onclick = () => {
-    const k = c.dataset.k; cur.acts = cur.acts.includes(k) ? cur.acts.filter(x => x !== k) : [...cur.acts, k]; draw();
-  });
-  $('#wFull').onclick = () => { vb = fullVB(); draw(); };
-  $('#wGps').onclick = () => {
-    if (!navigator.geolocation) return toast(t('wGpsErr'));
-    $('#wGps').disabled = true;
-    navigator.geolocation.getCurrentPosition(pos => {
-      $('#wGps').disabled = false;
-      const [E, N] = wgsToUtm34(pos.coords.latitude, pos.coords.longitude);
-      const x = Math.round(E - SITE.ox), y = Math.round(SITE.h - (N - SITE.oy));
-      cur.gps = { E: Math.round(E), N: Math.round(N), acc: Math.round(pos.coords.accuracy) };
-      if (x < 0 || y < 0 || x > SITE.w || y > SITE.h) { toast(t('wGpsOff')); return; }
-      cur.x = x; cur.y = y; const b = blockAt(x, y); cur.b = b ? b.id : '';
-      vb = padVB(b ? blockBox(b) : [x - 150, y - 150, 300, 300]); draw();
-    }, () => { $('#wGps').disabled = false; toast(t('wGpsErr')); }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
-  };
-  $('#wSame').onclick = () => {
-    const prev = S.days.filter(d => d.date < sd.date && workOf(d, mid)).at(-1);
-    if (!prev) return toast(t('wNoPrev'));
-    Object.assign(cur, clone(prev.work[mid])); $('#wPlace').value = cur.place || ''; $('#wNote').value = cur.note || '';
-    if (cur.b) vb = padVB(blockBox(SITE.blocks.find(b => b.id === cur.b))); draw();
-  };
-  $('#wCancel').onclick = close;
-  $('#wSave').onclick = () => {
-    cur.place = $('#wPlace').value.trim(); cur.note = $('#wNote').value.trim();
-    if (sd.entry && !guardDayEdit(sd.entry)) return;
-    src.work ||= {};
-    if (emptyWork(cur)) delete src.work[mid]; else src.work[mid] = cur;
-    close(); sd.entry ? commit() : render();
-  };
-  draw();
+  md.hidden = false; document.body.style.overflow = 'hidden';
+  if (!ed.mid || Number(curDay().hours[ed.mid]) <= 0) {
+    const sd = curDay(), src = srcOf(), list = S.machines.filter(x => Number(sd.hours[x.id]) > 0);
+    ed.mid = (list.find(x => !workOf(src, x.id)) || list[0] || S.machines[0]).id;
+  }
+  load(); draw();
 }
 function wgsToUtm34(lat, lon) {                     // WGS84 -> UTM zone 34N (the site drawing's grid)
   const a = 6378137, f = 1 / 298.257223563, k0 = 0.9996, e2 = f * (2 - f), ep2 = e2 / (1 - e2);
@@ -1383,89 +1523,114 @@ const MCOL = ['#C0392B', '#1E7B45', '#2F6DB5', '#8E44AD', '#D68910', '#16A085', 
 function consRows(c) {
   return c.calc.days.map(d => ({ d, ms: S.machines.filter(m => worked(d, m.id)) })).filter(x => x.ms.length);
 }
+function rangeCtx(from, to) {                       // any date range, for reports sent from a phone
+  return { calc: rangeCalc(S, addDays(from, -1), to), no: 0, draft: false, custom: true, year: parseD(to).getFullYear() };
+}
 function consDoc(c) {
   const P = S.parties.contractor, C = S.parties.client, po = S.po;
   const groups = consRows(c);
+  const lines = (d, m) => Math.max(1, stopsOf(workOf(d, m.id)).length);
   const pages = []; let cur = [], rows = 0;
-  for (const g of groups) { if (rows + g.ms.length > 20 && cur.length) { pages.push(cur); cur = []; rows = 0; } cur.push(g); rows += g.ms.length; }
+  for (const g of groups) { const n = g.ms.reduce((a, m) => a + (lines(g.d, m) > 1 ? 1 + (lines(g.d, m) - 1) * 0.5 : 1), 0);
+    if (rows + n > 20 && cur.length) { pages.push(cur); cur = []; rows = 0; } cur.push(g); rows += n; }
   if (cur.length) pages.push(cur);
-  const total = pages.length + 1, docNo = `STL-WC-${c.year}-${String(c.no).padStart(3, '0')}`;
+  const nLeg = (() => { let n = 0; for (const m of S.machines) { const set = new Set(); for (const { d } of groups) for (const st of stopsOf(workOf(d, m.id))) set.add(st.b || 'o' + (st.place || '')); n += set.size; } return n; })();
+  const legPages = nLeg > 8 ? Math.ceil((nLeg - 8) / 24) : 0;
+  const total = pages.length + 1 + legPages;
+  const docNo = c.custom ? `STL-WC-${(c.calc.to || todayIso()).replace(/-/g, '')}` : `STL-WC-${c.year}-${String(c.no).padStart(3, '0')}`;
+  const period = esc(enPeriod(c.calc.from, c.calc.to)) + (c.custom ? '' : c.draft ? ' (draft)' : ` · stage ${c.no}`);
   const head = (n, sub) => `<div class="ch"><div><div class="cb">${esc(P.name.toUpperCase())}</div><h1>DAILY WORK CONSOLIDATION — EQUIPMENT RENTAL</h1><div class="cs">${sub}</div></div>
     <table class="cm"><tr><td>Purchase order</td><td><b>${esc(po.number)}</b></td></tr><tr><td>Site</td><td>${esc(po.worksite || '')}, ${esc(po.site)}</td></tr>
-    <tr><td>Period</td><td>${esc(enPeriod(c.calc.from, c.calc.to))}${c.draft ? ' (draft)' : ` · stage ${c.no}`}</td></tr><tr><td>Client</td><td>${esc(C.name)}</td></tr></table></div>`;
-  const foot = n => `<div class="cf"><span>${esc(P.name)} · ${esc(P.address.replace(/,\s*Hungary$/i, ''))}</span><span>${docNo} · Page ${n} / ${total}</span></div>`;
+    <tr><td>Period</td><td>${period}</td></tr><tr><td>Client</td><td>${esc(C.name)}</td></tr></table></div>`;
+  const foot = n => `<div class="cf"><span>${esc(P.name)} · ${esc(P.address.replace(/,\s*Hungary$/i, ''))} · Travel: straight line × ${ROAD_F} at site speed (estimate)</span><span>${docNo} · Page ${n} / ${total}</span></div>`;
   const sig = (s, h) => { const v = validSig(s, h); return v ? sigMarkup(v, 62, 18, 'pt', '', 0.8) : '<span class="nosig">—</span>'; };
   const wd = s => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dow(s)];
-  let html = pages.map((pg, i) => `<div class="cons-holder"><div class="cons-page${c.draft ? ' draft' : ''}">${head(i + 1, 'Where each machine worked and what it did, day by day')}
-    <table class="ct"><thead><tr><th style="width:23mm">Date</th><th style="width:42mm">Machine</th><th class="c" style="width:13mm">Hours</th><th style="width:44mm">Location</th><th>Work carried out</th><th class="c" style="width:24mm">Contractor</th><th class="c" style="width:24mm">Client</th></tr></thead><tbody>
-    ${pg.map(({ d, ms }) => { const h = dayHash(d); return ms.map((m, k) => { const w = workOf(d, m.id); return `<tr class="${k === 0 ? 'first' : ''}">
+  const placeCell = w => { const st = stopsOf(w); return st.length > 1 ? st.map((s, i) => `${i + 1}. ${esc(placeOne(s, 'en'))}`).join('<br>') : esc(placeText(w, 'en')); };
+  const workCell = (m, w) => { const st = stopsOf(w); return st.length > 1 ? st.map((s, i) => `${i + 1}. ${esc(workOne(m, s, 'en') || '—')}`).join('<br>') : esc(workText(m, w, 'en')); };
+  let html = pages.map((pg, i) => `<div class="cons-holder"><div class="cons-page${c.draft ? ' draft' : ''}">${head(i + 1, 'Where each machine worked, what it did and how far it moved, day by day')}
+    <table class="ct"><thead><tr><th style="width:22mm">Date</th><th style="width:38mm">Machine</th><th class="c" style="width:12mm">Hours</th><th style="width:44mm">Location</th><th>Work carried out</th><th class="c" style="width:26mm">Travel on site</th><th class="c" style="width:22mm">Contractor</th><th class="c" style="width:22mm">Client</th></tr></thead><tbody>
+    ${pg.map(({ d, ms }) => { const h = dayHash(d); return ms.map((m, k) => { const w = workOf(d, m.id), tr = w ? travelOf(d.date, m, w) : null; return `<tr class="${k === 0 ? 'first' : ''}">
       ${k === 0 ? `<td rowspan="${ms.length}" class="dt"><b>${esc(enLong(d.date).replace(/ \d{4}$/, ''))}</b><br><span>${wd(d.date)}${isWeekend(d.date) ? ' · by agreement' : ''}</span></td>` : ''}
       <td><i class="dot" style="background:${MCOL[S.machines.indexOf(m) % MCOL.length]}"></i>${esc(m.name)}</td>
       <td class="c">${fmtDaysEN(Number(d.hours[m.id]))}</td>
-      <td>${w ? esc(placeText(w, 'en')) : '<span class="miss">not marked</span>'}</td>
-      <td>${w ? esc(workText(m, w, 'en')) : '<span class="miss">not marked</span>'}</td>
+      <td>${w ? placeCell(w) : '<span class="miss">not marked</span>'}</td>
+      <td>${w ? workCell(m, w) : '<span class="miss">not marked</span>'}</td>
+      <td class="c">${tr && travelText(tr, 'en') ? esc(travelText(tr, 'en')) : '—'}</td>
       ${k === 0 ? `<td rowspan="${ms.length}" class="c sg">${sig(d.sig.contractor, h)}</td><td rowspan="${ms.length}" class="c sg">${sig(d.sig.client, h)}</td>` : ''}</tr>`; }).join(''); }).join('')}
     </tbody></table>${foot(i + 1)}${c.draft ? '<div class="wmk">DRAFT</div>' : ''}</div></div>`).join('');
   // map page: one pin per machine and place (block), zoomed to where work happened
   const dayRanges = ds => {
     const out = []; let st = null, pv = null;
     const lbl = x => x.slice(8, 10) + '.' + x.slice(5, 7);
-    for (const x of [...ds].sort()) {
-      if (pv && addDays(pv, 1) === x) { pv = x; continue; }
-      if (st) out.push(st === pv ? lbl(st) : `${st.slice(5, 7) === pv.slice(5, 7) ? st.slice(8, 10) : lbl(st)}–${lbl(pv)}`);
-      st = pv = x;
-    }
-    if (st) out.push(st === pv ? lbl(st) : `${st.slice(5, 7) === pv.slice(5, 7) ? st.slice(8, 10) : lbl(st)}–${lbl(pv)}`);
+    const flush = () => out.push(st === pv ? lbl(st) : `${st.slice(5, 7) === pv.slice(5, 7) ? st.slice(8, 10) : lbl(st)}–${lbl(pv)}`);
+    for (const x of [...new Set(ds)].sort()) { if (pv && addDays(pv, 1) === x) { pv = x; continue; } if (st) flush(); st = pv = x; }
+    if (st) flush();
     return out.join(', ');
   };
   const spots = [], legend = [];
   S.machines.forEach((m, mi) => {
-    const byPlace = new Map();
+    const byPlace = new Map(); let km = 0;
     for (const { d } of groups) {
       const w = workOf(d, m.id); if (!w || !worked(d, m.id)) continue;
-      const key = w.b || 'out:' + (w.place || '');
-      const e = byPlace.get(key) || { w, days: [], xs: [], ys: [] };
-      e.days.push(d.date); if (w.x != null) { e.xs.push(w.x); e.ys.push(w.y); }
-      byPlace.set(key, e);
+      km += travelOf(d.date, m, w).km;
+      for (const s of stopsOf(w)) {
+        const key = s.b || 'out:' + (s.place || '');
+        const e = byPlace.get(key) || { s, days: [], xs: [], ys: [] };
+        e.days.push(d.date); if (s.x != null) { e.xs.push(s.x); e.ys.push(s.y); }
+        byPlace.set(key, e);
+      }
     }
-    for (const { w, days, xs, ys } of byPlace.values()) {
+    let first = true;
+    for (const { s, days, xs, ys } of byPlace.values()) {
       let x = null, y = null;
-      const blk = w.b && SITE.blocks.find(z => z.id === w.b);
+      const blk = s.b && SITE.blocks.find(z => z.id === s.b);
       if (blk) { const [bx, by, bw, bh] = blockBox(blk); x = bx + bw / 2; y = by + bh / 2; }
       else if (xs.length) { x = xs.reduce((a, v) => a + v, 0) / xs.length; y = ys.reduce((a, v) => a + v, 0) / ys.length; }
-      if (x != null) spots.push({ x, y, mi, col: MCOL[mi % MCOL.length], n: days.length });
-      legend.push(`<tr><td><i class="dot" style="background:${MCOL[mi % MCOL.length]}"></i>${esc(m.name)}</td><td>${esc(placeText(w, 'en'))}</td><td class="c">${days.length}</td><td>${esc(dayRanges(days))}</td></tr>`);
+      if (x != null) spots.push({ x, y, mi, col: MCOL[mi % MCOL.length], n: new Set(days).size });
+      legend.push(`<tr><td><i class="dot" style="background:${MCOL[mi % MCOL.length]}"></i>${esc(m.name)}</td><td>${esc(placeOne(s, 'en'))}</td><td class="c">${new Set(days).size}</td><td>${esc(dayRanges(days))}</td><td class="c">${first && km >= 0.05 ? (Math.round(km * 10) / 10).toFixed(1) + ' km' : ''}</td></tr>`);
+      first = false;
     }
   });
   let mvb = padVB(fullVB(), 0.01);
   if (spots.length) {
-    let x0 = Math.min(...spots.map(p => p.x)), x1 = Math.max(...spots.map(p => p.x)), y0 = Math.min(...spots.map(p => p.y)), y1 = Math.max(...spots.map(p => p.y));
-    let w = Math.max(x1 - x0, 900) * 1.5, h = Math.max(y1 - y0, 500) * 1.5;
-    const asp = 273 / 96;                                     // map box on the page
+    const [bx, by, bw, bh] = boxOf(spots, 900, 500);
+    let w = bw * 1.5, h = bh * 1.5; const asp = 273 / 96;
     if (w / h < asp) w = h * asp; else h = w / asp;
-    mvb = [(x0 + x1) / 2 - w / 2, (y0 + y1) / 2 - h / 2, w, h];
+    mvb = [bx + bw / 2 - w / 2, by + bh / 2 - h / 2, w, h];
   }
   const nMach = S.machines.length, rr = mvb[2] * 0.028;
-  const pins = spots.map(p => {
-    const ang = (p.mi / nMach) * Math.PI * 2 - Math.PI / 2;
-    return { x: p.x + Math.cos(ang) * rr, y: p.y + Math.sin(ang) * rr, color: p.col, label: `${p.n}d` };
-  });
-  html += `<div class="cons-holder"><div class="cons-page map${c.draft ? ' draft' : ''}">${head(total, 'Site plan — where each machine worked')}
+  const pins = spots.map(p => { const ang = (p.mi / nMach) * Math.PI * 2 - Math.PI / 2; return { x: p.x + Math.cos(ang) * rr, y: p.y + Math.sin(ang) * rr, color: p.col, label: `${p.n}d` }; });
+  const thead = '<thead><tr><th>Machine</th><th>Location</th><th class="c">Days</th><th>Dates</th><th class="c">Travel, period</th></tr></thead>';
+  const empty = '<tr><td colspan="5" class="miss">No locations marked yet.</td></tr>';
+  html += `<div class="cons-holder"><div class="cons-page map${c.draft ? ' draft' : ''}">${head(pages.length + 1, 'Site plan — where each machine worked')}
     <div class="cmap">${SITE ? siteSVG(mvb, { pins, attrs: 'preserveAspectRatio="xMidYMid meet"' }) : ''}</div>
-    <table class="ct lg"><thead><tr><th>Machine</th><th>Location</th><th class="c">Days</th><th>Dates</th></tr></thead><tbody>${legend.join('') || '<tr><td colspan="4" class="miss">No locations marked yet.</td></tr>'}</tbody></table>
-    ${foot(total)}${c.draft ? '<div class="wmk">DRAFT</div>' : ''}</div></div>`;
+    <table class="ct lg">${thead}<tbody>${legend.slice(0, 8).join('') || empty}</tbody></table>
+    ${foot(pages.length + 1)}${c.draft ? '<div class="wmk">DRAFT</div>' : ''}</div></div>`;
+  for (let k = 0; k < legPages; k++) {
+    const n = pages.length + 2 + k;
+    html += `<div class="cons-holder"><div class="cons-page map${c.draft ? ' draft' : ''}">${head(n, 'Site plan — where each machine worked (continued)')}
+      <table class="ct lg">${thead}<tbody>${legend.slice(8 + k * 24, 8 + (k + 1) * 24).join('')}</tbody></table>
+      ${foot(n)}${c.draft ? '<div class="wmk">DRAFT</div>' : ''}</div></div>`;
+  }
   return html;
 }
 function consCsv(c) {
   const q = v => { const s = String(v ?? ''); return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
-  const out = [['Date', 'Weekday', 'Machine', 'Hours', 'Location', 'Block', 'Grid E (UTM 34N)', 'Grid N (UTM 34N)', 'Work carried out', 'Munka (HU)', 'Contractor signed', 'Client signed'].join(';')];
+  const num = v => String(v).replace('.', ',');
+  const out = [['Date', 'Weekday', 'Machine', 'Hours', 'Place no.', 'Location', 'Block', 'Grid E (UTM 34N)', 'Grid N (UTM 34N)', 'Work carried out', 'Munka (HU)',
+    'Travel to this place (km, est.)', 'Day travel (km, est.)', 'Day travel (min, est.)', 'Contractor signed', 'Client signed'].join(';')];
   for (const { d, ms } of consRows(c)) {
     const h = dayHash(d);
     for (const m of ms) {
-      const w = workOf(d, m.id) || {};
-      const E = w.x != null ? Math.round(w.x + SITE.ox) : '', N = w.y != null ? Math.round(SITE.h - w.y + SITE.oy) : '';
-      out.push([d.date, WD.en[dow(d.date)], m.name, String(Number(d.hours[m.id])).replace('.', ','), placeText(w, 'en'), (w.b || '').replace('-', '/'), E, N,
-        workText(m, w, 'en'), workText(m, w, 'hu'), validSig(d.sig.contractor, h)?.name || '', validSig(d.sig.client, h)?.name || ''].map(q).join(';'));
+      const w = workOf(d, m.id), st = stopsOf(w), tr = w ? travelOf(d.date, m, w) : { legs: [], km: 0, min: 0 };
+      const legTo = s => { const l = tr.legs.find(x => x.to === s); return l ? num((Math.round(l.m * ROAD_F / 100) / 10).toFixed(1)) : ''; };
+      (st.length ? st : [null]).forEach((s, i) => {
+        const E = s && s.x != null ? Math.round(s.x + SITE.ox) : '', N = s && s.y != null ? Math.round(SITE.h - s.y + SITE.oy) : '';
+        out.push([d.date, WD.en[dow(d.date)], m.name, num(Number(d.hours[m.id])), s ? i + 1 : '', s ? placeOne(s, 'en') : 'not marked', s ? (s.b || '').replace('-', '/') : '', E, N,
+          s ? workOne(m, s, 'en') : '', s ? workOne(m, s, 'hu') : '', s ? legTo(s) : '',
+          i === 0 && tr.km >= 0.05 ? num((Math.round(tr.km * 10) / 10).toFixed(1)) : '', i === 0 && tr.km >= 0.05 ? Math.round(tr.min) : '',
+          validSig(d.sig.contractor, h)?.name || '', validSig(d.sig.client, h)?.name || ''].map(q).join(';'));
+      });
     }
   }
   return '﻿' + out.join('\r\n');
@@ -1553,38 +1718,43 @@ function renderDays() {
   el.innerHTML = html;
 }
 
-/* ---- 📍 Hol-Mit tab: one place for the crew to mark where & what */
+/* ---- 📍 Hol-Mit tab: one place for the crew to mark where & what, and send a report */
 function renderWork() {
   const el = $('#v-work');
   if (!SITE) { el.innerHTML = `<div class="card muted">No site plan.</div>`; return; }
   const sd = selDay(), src = sd.entry || UI.draft;
   const isToday = sd.date === todayIso();
   const working = S.machines.filter(m => Number(sd.hours[m.id]) > 0);
+  const missing = working.filter(m => !workOf(src, m.id)).length;
   const cards = S.machines.map((m, mi) => {
-    const on = Number(sd.hours[m.id]) > 0, w = workOf(src, m.id);
+    const on = Number(sd.hours[m.id]) > 0, w = workOf(src, m.id), tr = w ? travelText(travelOf(sd.date, m, w), S.lang) : '';
+    const st = stopsOf(w);
     return `<div class="wcardm${on ? '' : ' off'}${on && !w ? ' need' : ''}">
       <div class="wmart">${machineArt(m)}<i class="dot big" style="background:${MCOL[mi % MCOL.length]}"></i></div>
       <div class="wminfo"><b>${esc(m.name)}</b>
         ${!on ? `<div class="muted small">${esc(t('idle'))}</div>`
-          : w ? `<div class="wmplace">\u{1F4CD} ${esc(placeText(w, S.lang) || '—')}</div><div class="small">\u{1F6E0} ${esc(workText(m, w, S.lang) || '—')}</div>`
+          : w ? st.map((s, i) => `<div class="wmplace">\u{1F4CD} ${st.length > 1 ? `${i + 1}. ` : ''}${esc(placeOne(s, S.lang) || '—')}</div><div class="small">\u{1F6E0} ${esc(workOne(m, s, S.lang) || '—')}</div>`).join('')
+            + (tr ? `<div class="small trv">\u{1F69C} ${esc(tr)}</div>` : '')
           : `<div class="wmplace warnc">${esc(t('wtNotYet'))}</div>`}
       </div>
       ${on ? `<button class="btn ${w ? '' : 'primary'} wmbtn" data-a="workM" data-m="${esc(m.id)}">\u{1F4CD} ${esc(w ? t('wtEdit') : t('wtMark'))}</button>` : ''}
     </div>`;
   }).join('');
-  const pins = [];
-  S.machines.forEach((m, mi) => { const w = workOf(src, m.id); if (w && w.x != null && Number(sd.hours[m.id]) > 0) pins.push({ x: w.x + mi * 12, y: w.y + mi * 12, color: MCOL[mi % MCOL.length], label: m.name.replace(/^4-axle tipper truck/, 'Tipper').replace('Tracked excavator', 'Excavator') }); });
-  let vb = fullVB();
-  if (pins.length) {
-    const x0 = Math.min(...pins.map(p => p.x)), x1 = Math.max(...pins.map(p => p.x)), y0 = Math.min(...pins.map(p => p.y)), y1 = Math.max(...pins.map(p => p.y));
-    vb = padVB([x0, y0, Math.max(x1 - x0, 500), Math.max(y1 - y0, 350)], 0.3);
-  }
+  const pins = [], lines = [];
+  S.machines.forEach((m, mi) => {
+    const w = workOf(src, m.id); if (!w || Number(sd.hours[m.id]) <= 0) return;
+    const pts = stopsOf(w).filter(s => s.x != null).map(s => ({ x: s.x + mi * 12, y: s.y + mi * 12 }));
+    pts.forEach((p, i) => pins.push({ ...p, color: MCOL[mi % MCOL.length], num: pts.length > 1 ? String(i + 1) : '', label: i === pts.length - 1 ? m.name.replace(/^4-axle tipper truck/, 'Tipper').replace('Tracked excavator', 'Excavator') : '' }));
+    if (pts.length > 1) lines.push({ pts: pts.map(p => [p.x, p.y]), color: MCOL[mi % MCOL.length] });
+  });
+  const vb = pins.length ? padVB(boxOf(pins), 0.3) : fullVB();
   const past = S.days.filter(d => d.date !== sd.date).slice().reverse().map(d => {
     const ms = S.machines.filter(m => worked(d, m.id)), miss = ms.filter(m => !workOf(d, m.id)).length;
     return `<button class="hrow" data-a="workDay" data-v="${d.date}"><span class="hd"><b>${esc(shortDate(d.date))}</b> <span class="muted">${esc(wdName(d.date))}</span></span>
-      <span class="hm muted">${ms.map(m => { const w = workOf(d, m.id); return w ? esc((w.b || '').replace('-', '/') || t('wOutside')) : '—'; }).join(' · ')}</span>
+      <span class="hm muted">${ms.map(m => { const w = workOf(d, m.id); return w ? esc(stopsOf(w).map(s => (s.b || '').replace('-', '/') || t('wOutside')).join('→')) : '—'; }).join(' · ')}</span>
       <span class="badge ${miss ? 'amber' : 'ok'}">${miss ? esc(t('wtMissingN', { n: miss })) : '✓ ' + esc(t('wtDone'))}</span></button>`;
   }).join('');
+  const rr = UI.repRange || 'week';
   el.innerHTML = `<div class="card">
       <div class="row" style="align-items:center">
         <button class="btn" data-a="workShift" data-v="-1" aria-label="-1">◀</button>
@@ -1594,15 +1764,44 @@ function renderWork() {
       <label class="other" style="margin-top:8px">\u{1F4C5} ${esc(t('otherDay'))}<input type="date" value="${sd.date}" data-c="selDate"></label>
       ${!sd.entry ? `<div class="alert info small" style="margin:10px 0 0">${esc(t('wtUnsaved'))}</div>` : ''}
     </div>
+    ${working.length ? `<button class="btn huge ${missing ? 'primary' : ''}" data-a="workStart" style="margin-bottom:12px">\u{1F4CD} ${esc(missing ? t('wtStart', { n: missing }) : t('wtAllMarked'))}</button>` : ''}
     <p class="muted" style="margin:4px 2px 10px">${esc(t('wtIntro'))}</p>
     ${working.length ? cards : `<div class="card muted">${esc(t('wtNoneWorked'))}</div>`}
     <div class="card"><div class="k">${esc(t('wtMapTitle'))}</div>
-      <div class="wmap" style="margin-top:6px">${siteSVG(vb, { pins })}</div>
+      <div class="wmap" style="margin-top:6px">${siteSVG(vb, { pins, lines, pinDiv: 45 })}</div>
       ${pins.length ? '' : `<div class="small muted" style="margin-top:6px">${esc(t('wtMapEmpty'))}</div>`}
     </div>
-    <div class="row" style="margin:4px 0 12px"><button class="btn" data-a="openCons">\u{1F4C4} ${esc(t('consTitle'))} →</button></div>
+    <div class="card"><h2>\u{1F4E4} ${esc(t('repTitle'))}</h2>
+      <p class="small muted" style="margin:0 0 10px">${esc(t('repIntro'))}</p>
+      <div class="seg" role="group" style="margin-bottom:10px">${['day', 'week', 'all'].map(k => `<button data-a="repRange" data-v="${k}" class="${rr === k ? 'on' : ''}">${esc(t('rep_' + k))}</button>`).join('')}</div>
+      <div class="small muted" style="margin-bottom:10px">${esc(repLabel())}</div>
+      <div class="row"><button class="btn primary" data-a="repXls">\u{1F4CA} ${esc(t('repExcel'))}</button><button class="btn" data-a="repPdf">\u{1F4C4} ${esc(t('repPdf'))}</button></div>
+      <p class="small muted" style="margin:10px 0 0">${esc(t('repPdfHint'))}</p>
+    </div>
     ${past ? `<h3 class="histh">${esc(t('history'))}</h3><div class="hist">${past}</div>` : ''}`;
 }
+function repSpan() {
+  const sel = selDay().date, ds = S.days.map(d => d.date);
+  if ((UI.repRange || 'week') === 'day') return [sel, sel];
+  if (UI.repRange === 'all') return ds.length ? [ds[0], ds.at(-1)] : [sel, sel];
+  const mon = addDays(sel, -((dow(sel) + 6) % 7));
+  return [mon, addDays(mon, 6)];
+}
+const repLabel = () => { const [a, b] = repSpan(); return a === b ? uiDate(a) : `${uiDate(a)} – ${uiDate(b)}`; };
+async function shareOrDownload(file) {
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: t('repTitle') }); return; } catch (e) { if (e.name === 'AbortError') return; }
+  }
+  download(file); toast(t('shareSaved'));
+}
+function printCons(c) {
+  const pv = $('#v-print');
+  pv.innerHTML = `<div class="docs-out">${consDoc(c)}</div>`;
+  document.querySelectorAll('main > section').forEach(s => s.classList.remove('printing'));
+  pv.classList.add('printing');
+  setTimeout(() => window.print(), 60);
+}
+window.addEventListener('afterprint', () => { const pv = $('#v-print'); if (pv && pv.classList.contains('printing')) { pv.classList.remove('printing'); pv.innerHTML = ''; render(); } });
 
 /* ---- Status: how complete are the where/what marks */
 function workStatusBox() {
@@ -1919,7 +2118,9 @@ function renderSettings() {
   </div>
 
   <div class="card"><h2>${esc(t('sPrices'))}</h2><p class="small muted" style="margin-top:0">${esc(t('pricesHint'))}</p>
-    <div class="grid3">${KINDS.filter(k => k !== 'other').map(k => fld(t('kind_' + k) + ' \u2014 EUR / ' + t('daysWord1'), `prices.${k}`, S.prices?.[k] ?? '', 'number', 'min="0"')).join('')}</div></div>
+    <div class="grid3">${KINDS.filter(k => k !== 'other').map(k => fld(t('kind_' + k) + ' \u2014 EUR / ' + t('daysWord1'), `prices.${k}`, S.prices?.[k] ?? '', 'number', 'min="0"')).join('')}</div>
+    <h3>${esc(t('sSpeeds'))}</h3><p class="small muted" style="margin-top:0">${esc(t('speedsHint'))}</p>
+    <div class="grid3">${KINDS.map(k => fld(t('kind_' + k) + ' \u2014 km/h', `speeds.${k}`, S.speeds?.[k] ?? SPEED_DEF[k], 'number', 'min="0.5"')).join('')}</div></div>
 
   <div class="card"><h2>${esc(t('sMachines'))}</h2>
     ${S.machines.map((m, i) => `<div class="mrow">
@@ -2125,6 +2326,18 @@ const actions = {
   tab(b) { UI.tab = b.dataset.v; history.replaceState(null, '', '#' + UI.tab); saveNow(); render(); window.scrollTo(0, 0); },
   lang(b) { S.lang = b.dataset.v; save(); render(); },
   pickDay(b) { UI.sel = b.dataset.v; UI.tab = 'days'; render(); window.scrollTo(0, 0); },
+  workStart() { openWork(null); },
+  repRange(b) { UI.repRange = b.dataset.v; render(); },
+  repXls() {
+    const [a, b] = repSpan(), c = rangeCtx(a, b);
+    if (!c.calc.days.length) return toast(t('repEmpty'));
+    shareOrDownload(new File([consCsv(c)], `hol-mit-${a}${a === b ? '' : '_' + b}.csv`, { type: 'text/csv' }));
+  },
+  repPdf() {
+    const [a, b] = repSpan(), c = rangeCtx(a, b);
+    if (!c.calc.days.length) return toast(t('repEmpty'));
+    printCons(c);
+  },
   workDayGo(b) { UI.sel = b.dataset.v; UI.tab = 'work'; render(); window.scrollTo(0, 0); },
   workDay(b) { UI.sel = b.dataset.v; render(); window.scrollTo(0, 0); },
   workShift(b) {
