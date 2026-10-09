@@ -214,6 +214,10 @@ body.locked .chrome,body.locked main{display:none}
 .chip.del{color:var(--red);border-color:#e7b4ae}
 .travel{margin-top:12px;background:var(--pale);border-radius:10px;padding:10px 12px;color:var(--navy)}
 .wfoot{position:sticky;bottom:-16px;background:#fff;padding:10px 0 4px;margin-top:12px;border-top:1px solid var(--rule)}
+.mp.addm{border-style:dashed;border-color:#9fb0cf;justify-content:center;color:var(--navy)}
+.mp.addm .plus{font-size:30px;line-height:1}
+.tile.add.wadd{width:100%;min-height:76px;flex-direction:column;gap:4px;margin-bottom:12px;border-radius:14px}
+.tile.add.wadd small{font-weight:400;color:var(--grey);font-size:13px}
 /* Hol-Mit tab */
 .wcardm{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--green);border-radius:14px;padding:10px;margin-bottom:10px}
 .wcardm.need{border-color:var(--amber-line);background:#fffbef}
@@ -382,6 +386,7 @@ const UIKEY = 'szihalom-worklog-ui';
 /* ------------------------------------------------------------------ i18n */
 const T = {
   hu: {
+    wWorkedOn: 'Igen, dolgozott ezen a napon ({h} óra)', wWorkedOnShort: 'Dolgozott ezen a napon', wAddMachineHint: 'Extra gép, amit az ügyfél kért – utána rögtön bejelölheti, hol dolgozott.',
     wTitle: 'Hol és mit dolgozott?', wStepDay: 'Nap', wStepMachine: 'Gép', wStepWhere: 'Hol dolgozott? (ha több helyen: + Új hely)', wStepWhat: 'Mit csinált itt? ({n}. hely)',
     wNewPlace: 'új hely', wAddPlace: 'Új hely', wPrevPlace: 'tegnap', wNotWorking: 'Ez a gép ezen a napon nem dolgozott (Munkanap fül).',
     wTravel: 'Mozgás a helyek között', wTravelNote: 'Becslés: légvonal × {f}, {v} km/h haladással.', wTravelPrev: 'Az előző munkanap utolsó helyétől számolva.',
@@ -480,6 +485,7 @@ const T = {
     signedBy: '{n}, {d}', dayTot: '{h} gépóra', daysCol: 'Nap',
   },
   en: {
+    wWorkedOn: 'Yes, it worked on this day ({h} h)', wWorkedOnShort: 'Worked on this day', wAddMachineHint: 'An extra machine the client asked for — mark where it worked right after.',
     wTitle: 'Where and what did it work?', wStepDay: 'Day', wStepMachine: 'Machine', wStepWhere: 'Where did it work? (more places: + New place)', wStepWhat: 'What did it do here? (place {n})',
     wNewPlace: 'new place', wAddPlace: 'New place', wPrevPlace: 'yesterday', wNotWorking: 'This machine did not work on this day (Workday tab).',
     wTravel: 'Travel between places', wTravelNote: 'Estimate: straight line × {f} at {v} km/h.', wTravelPrev: 'Counted from the last place of the previous working day.',
@@ -1124,7 +1130,7 @@ function nextMachineName(kind) {
   }
 }
 const fixedPrice = kind => Number(S.prices?.[kind]) || 0;
-function openAddMachine() {
+function openAddMachine(after) {
   const m = $('#modal');
   const st = { kind: 'dozer', photo: '', nameEdited: false };
   m.innerHTML = `<div class="mcard" role="dialog" aria-modal="true">
@@ -1180,6 +1186,7 @@ function openAddMachine() {
     S.machines.push({ id: 'm' + uid, line: 'l' + uid, name, kind: st.kind, photo: st.photo, rate: Math.round(r * 100) / 100, type: '', inv: '', operator: '' });
     UI.draft = null; UI.calc = null;
     close(); commit(); toast(t('amAdded', { n: name }));
+    if (after) after(S.machines.at(-1));
   };
   showKind();
 }
@@ -1367,6 +1374,18 @@ function travelText(tr, lang) {
   return `${kmS} km · ~${time}`;
 }
 
+/* ---- set a machine to 'worked' on the selected day (new or idle machine) */
+function setWorked(mid) {
+  const sd = selDay(), src = sd.entry || UI.draft;
+  if (sd.entry && !guardDayEdit(sd.entry)) return false;
+  src.hours[mid] = baseH();
+  if (sd.entry) { sortAll(S); save(); }
+  return true;
+}
+function addMachineHere() {
+  openAddMachine(m => { if (setWorked(m.id)) { render(); openWork(m.id); } });
+}
+
 /* ---- the marking window: ① day ② machine ③ where (one or more places) ④ what */
 function openWork(mid) {
   if (!SITE) return toast('No site plan');
@@ -1421,8 +1440,9 @@ function openWork(mid) {
         <label class="chip chipdate">\u{1F4C5}<input type="date" id="eDate" value="${sd.date}" aria-label="${esc(t('otherDay'))}"></label></div>
       <div class="k" style="margin-top:12px">② ${esc(t('wStepMachine'))}</div>
       <div class="mpick scrollx">${S.machines.map((x, i) => { const on = Number(sd.hours[x.id]) > 0, done = !!workOf(src, x.id);
-        return `<button type="button" class="mp${x.id === ed.mid ? ' on' : ''}${on ? '' : ' idle'}" data-m="${esc(x.id)}" ${on ? '' : 'disabled'}>${machineArt(x)}<span>${esc(x.name)}</span><i>${on ? (done ? '✓' : '○') : esc(t('idle'))}</i></button>`; }).join('')}</div>
-      ${!workingNow ? `<div class="alert warn small" style="margin-top:10px">${esc(t('wNotWorking'))}</div>` : `
+        return `<button type="button" class="mp${x.id === ed.mid ? ' on' : ''}${on ? '' : ' idle'}" data-m="${esc(x.id)}">${machineArt(x)}<span>${esc(x.name)}</span><i>${on ? (done ? '✓' : '○') : esc(t('idle'))}</i></button>`; }).join('')}
+        <button type="button" class="mp addm" id="eNewM"><span class="plus">+</span><span>${esc(t('amTitle'))}</span></button></div>
+      ${!workingNow ? `<div class="alert warn small" style="margin-top:10px">${esc(t('wNotWorking'))}<div style="margin-top:8px"><button class="btn primary" id="eWorkOn">\u2713 ${esc(t('wWorkedOn', { h: baseH() }))}</button></div></div>` : `
       <div class="k" style="margin-top:12px">③ ${esc(t('wStepWhere'))}</div>
       <div class="stoptabs">${ed.stops.map((x, i) => `<button type="button" class="chip stab${i === ed.si ? ' on' : ''}" data-si="${i}">${i + 1}. ${esc(placeOne(x, S.lang) || t('wNewPlace'))}</button>`).join('')}
         <button type="button" class="chip add" id="eAdd">+ ${esc(t('wAddPlace'))}</button>
@@ -1446,7 +1466,9 @@ function openWork(mid) {
     $('#eX').onclick = () => { persist(); close(); };
     md.querySelectorAll('#eDays .chip[data-d]').forEach(c => c.onclick = () => go(() => { UI.sel = c.dataset.d; load(); }));
     $('#eDate').onchange = e => { if (ISO_RE.test(e.target.value)) go(() => { UI.sel = e.target.value; load(); }); };
-    md.querySelectorAll('.mp').forEach(c => c.onclick = () => go(() => { ed.mid = c.dataset.m; load(); }));
+    md.querySelectorAll('.mp[data-m]').forEach(c => c.onclick = () => go(() => { ed.mid = c.dataset.m; load(); }));
+    $('#eNewM').onclick = () => { if (!persist()) return; md.hidden = true; md.innerHTML = ''; addMachineHere(); };
+    if ($('#eWorkOn')) $('#eWorkOn').onclick = () => { if (setWorked(ed.mid)) { load(); draw(); } };
     $('#wSame').onclick = () => {
       const sd = curDay(), prev = S.days.filter(d => d.date < sd.date && workOf(d, ed.mid)).at(-1);
       if (!prev) return toast(t('wNoPrev'));
@@ -1737,6 +1759,7 @@ function renderWork() {
             + (tr ? `<div class="small trv">\u{1F69C} ${esc(tr)}</div>` : '')
           : `<div class="wmplace warnc">${esc(t('wtNotYet'))}</div>`}
       </div>
+      ${!on ? `<button class="btn wmbtn" data-a="workOn" data-m="${esc(m.id)}">\u2713 ${esc(t('wWorkedOnShort'))}</button>` : ''}
       ${on ? `<button class="btn ${w ? '' : 'primary'} wmbtn" data-a="workM" data-m="${esc(m.id)}">\u{1F4CD} ${esc(w ? t('wtEdit') : t('wtMark'))}</button>` : ''}
     </div>`;
   }).join('');
@@ -1766,7 +1789,8 @@ function renderWork() {
     </div>
     ${working.length ? `<button class="btn huge ${missing ? 'primary' : ''}" data-a="workStart" style="margin-bottom:12px">\u{1F4CD} ${esc(missing ? t('wtStart', { n: missing }) : t('wtAllMarked'))}</button>` : ''}
     <p class="muted" style="margin:4px 2px 10px">${esc(t('wtIntro'))}</p>
-    ${working.length ? cards : `<div class="card muted">${esc(t('wtNoneWorked'))}</div>`}
+    ${working.length ? '' : `<div class="card muted">${esc(t('wtNoneWorked'))}</div>`}${cards}
+    <button class="tile add wadd" data-a="addMachineWork">+ ${esc(t('amTitle'))}<small>${esc(t('wAddMachineHint'))}</small></button>
     <div class="card"><div class="k">${esc(t('wtMapTitle'))}</div>
       <div class="wmap" style="margin-top:6px">${siteSVG(vb, { pins, lines, pinDiv: 45 })}</div>
       ${pins.length ? '' : `<div class="small muted" style="margin-top:6px">${esc(t('wtMapEmpty'))}</div>`}
@@ -2406,6 +2430,8 @@ const actions = {
   },
   delLine(b) { if (confirm(t('confirmDelLine'))) { S.po.lines.splice(Number(b.dataset.v), 1); commit(); } },
   addMachine() { openAddMachine(); },
+  addMachineWork() { addMachineHere(); },
+  workOn(b) { if (setWorked(b.dataset.m)) { render(); openWork(b.dataset.m); } },
   async lock() { await saveNow(); try { localStorage.removeItem(KEYKEY); } catch (e) { } location.reload(); },
   workM(b) { openWork(b.dataset.m); },
   consCsv() {
