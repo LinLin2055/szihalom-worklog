@@ -348,6 +348,7 @@ const UIKEY = 'szihalom-worklog-ui';
 /* ------------------------------------------------------------------ i18n */
 const T = {
   hu: {
+    wsTitle: 'Hol és mit dolgoztak a gépek', wsMarked: 'Bejelölve', wsMachineDays: 'gépnap', wsMissing: 'Hiányzó jelölések – koppintson a napra, és a gépeknél a sárga 📍 gombbal pótolja:', wsAll: 'Minden gépnap be van jelölve.',
     workBtn: 'Hol? · Mit?', wWhere: 'Hol dolgozott?', wWhat: 'Mit csinált?', wGps: 'GPS', wFull: 'Teljes térkép',
     wMapHint: 'Koppintson arra a blokkra, ahol a gép dolgozott – utána még egyszer a pontos helyre.', wSelected: 'Hely: {b}', wOutside: 'Blokkon kívül',
     wPlacePh: 'Hely pontosítása (pl. BESS, bejáró út, depónia)', wNotePh: 'Egyéb munka / megjegyzés', wSame: 'Mint tegnap',
@@ -436,6 +437,7 @@ const T = {
     signedBy: '{n}, {d}', dayTot: '{h} gépóra', daysCol: 'Nap',
   },
   en: {
+    wsTitle: 'Where and what the machines worked', wsMarked: 'Marked', wsMachineDays: 'machine-days', wsMissing: 'Missing marks — tap a day, then use the yellow 📍 button on each machine:', wsAll: 'Every machine-day is marked.',
     workBtn: 'Where? · What?', wWhere: 'Where did it work?', wWhat: 'What did it do?', wGps: 'GPS', wFull: 'Whole map',
     wMapHint: 'Tap the block where the machine worked — then tap again on the exact spot.', wSelected: 'Place: {b}', wOutside: 'Outside the blocks',
     wPlacePh: 'Place detail (e.g. BESS, access road, stockpile)', wNotePh: 'Other work / note', wSame: 'Same as yesterday',
@@ -1535,6 +1537,27 @@ function renderDays() {
   el.innerHTML = html;
 }
 
+/* ---- Status: how complete are the where/what marks */
+function workStatusBox() {
+  if (!SITE) return '';
+  let need = 0, done = 0; const missing = [];
+  for (const d of S.days) {
+    const ms = S.machines.filter(m => worked(d, m.id));
+    const miss = ms.filter(m => !workOf(d, m.id));
+    need += ms.length; done += ms.length - miss.length;
+    if (miss.length) missing.push({ d, n: miss.length });
+  }
+  const pct = need ? Math.round(100 * done / need) : 100;
+  return `<div class="card">
+    <div class="row"><div><div class="k">${esc(t('wsMarked'))}</div><div class="mid">${done} / ${need} <span class="small muted">${esc(t('wsMachineDays'))}</span></div></div>
+      <span class="spacer"></span><button class="btn primary" data-a="openCons">\u{1F4C4} ${esc(t('consTitle'))} →</button></div>
+    <div class="bar"><i class="b1" style="width:${pct}%;background:var(--green)"></i></div>
+    ${missing.length ? `<div class="small muted" style="margin:8px 0 6px">${esc(t('wsMissing'))}</div>
+      <div class="chips">${missing.map(({ d, n }) => `<button class="chip" data-a="pickDay" data-v="${d.date}">${esc(shortDate(d.date))} <span class="muted">(${n})</span></button>`).join('')}</div>`
+      : `<div class="alert ok small" style="margin:8px 0 0">✓ ${esc(t('wsAll'))}</div>`}
+  </div>`;
+}
+
 /* -------------------------------------------------------------- Status */
 function renderStatus() {
   const el = $('#v-status');
@@ -1570,6 +1593,7 @@ function renderStatus() {
       <td class="n">${x.units}</td><td class="n">${fmtNum(x.cumDays)} / ${lineDaysOf(S, x.line)}</td><td class="n">${fmtUI(x.net)}</td><td class="n">${fmtNum(x.remDays)}</td><td class="n">${fmtUI(x.remNet)}</td></tr>`).join('')}
       <tr class="tot"><td>Σ</td><td></td><td></td><td class="n">${fmtUI(all.net)}</td><td></td><td class="n">${fmtUI(all.remNet)}</td></tr>
     </tbody></table></div></div>
+  <h3 class="histh">\u{1F4CD} ${esc(t('wsTitle'))}</h3>${workStatusBox()}
   <h3 class="histh">${esc(t('cmpTitle'))}</h3>${overBox(poCompare(actualDays()), 'extFromActual')}`;
   // stages
   html += `<div class="card"><h2>${esc(t('stages'))}</h2>`;
@@ -2033,7 +2057,8 @@ function setHours(mid, fn) {
 const actions = {
   tab(b) { UI.tab = b.dataset.v; history.replaceState(null, '', '#' + UI.tab); saveNow(); render(); window.scrollTo(0, 0); },
   lang(b) { S.lang = b.dataset.v; save(); render(); },
-  pickDay(b) { UI.sel = b.dataset.v; render(); window.scrollTo(0, 0); },
+  pickDay(b) { UI.sel = b.dataset.v; UI.tab = 'days'; render(); window.scrollTo(0, 0); },
+  openCons() { UI.docKind = 'cons'; UI.docStage = null; UI.tab = 'docs'; render(); window.scrollTo(0, 0); },
   toggleM(b) { setHours(b.dataset.m, h => h > 0 ? 0 : baseH()); },
   stepH(b) { setHours(b.dataset.m, h => Math.max(0.5, Math.min(24, h + Number(b.dataset.v)))); },
   saveDay() {
