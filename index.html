@@ -1393,11 +1393,25 @@ function actLabel(m, key, lang) {
 const stopEmpty = s => !s || (!s.b && s.x == null && !(s.acts || []).length && !s.note && !s.place);
 const stopsOf = w => !w ? [] : (Array.isArray(w.stops) ? w.stops : [w]).filter(s => !stopEmpty(s));
 const emptyWork = w => stopsOf(w).length === 0;
-const workDone = w => { const st = stopsOf(w); return st.length > 0 && st.every(s => s.b || s.x != null) && st.some(s => (s.acts || []).length || s.note); };
+const workDone = w => stopsOf(w).some(s => s.b || s.x != null);     // marked = has a place; the job is optional
 const markSym = w => workDone(w) ? '\u2713' : stopsOf(w).length ? '\u25D0' : '\u25CB';   // ✓ done · ◐ started · ○ nothing
 const workOf = (src, mid) => (src && src.work && !emptyWork(src.work[mid])) ? src.work[mid] : null;
+const blockLabel = id => (SITE && SITE.blocks.find(b => b.id === id)?.label) || String(id).replace('-', '/');
+function effB(s) {                                    // the block a stop belongs to (the drawn outlines leave out roads and edges)
+  if (!s) return '';
+  if (s.b) return s.b;
+  if (s.x == null || !SITE) return '';
+  const n = nearestBlock(s.x, s.y); return n.b && n.d <= NEAR_IN ? n.b.id : '';
+}
 function placeOne(s, lang) {
-  const where = s.b ? s.b.replace('-', '/') : (s.x != null ? (lang === 'en' ? 'Outside the blocks' : 'Blokkon kívül') : '');
+  let where = '';
+  const b = effB(s);
+  if (b) where = blockLabel(b);
+  else if (s.x != null) {
+    const n = SITE ? nearestBlock(s.x, s.y) : { b: null };
+    const far = n.b ? (lang === 'en' ? `, ${Math.round(n.d / 10) * 10} m from ${n.b.label}` : `, ${n.b.label}-től ${Math.round(n.d / 10) * 10} m-re`) : '';
+    where = (lang === 'en' ? 'Outside the blocks' : 'Blokkon kívül') + far;
+  }
   return [where, s.place].filter(Boolean).join(' – ');
 }
 const isShuttle = s => !!(s && (s.shuttle || s.trips));
@@ -1416,6 +1430,31 @@ function pip(x, y, r) {
   return c;
 }
 const blockAt = (x, y) => SITE ? SITE.blocks.find(b => b.rings.some(r => pip(x, y, r))) || null : null;
+const NEAR_IN = 40;                                     // metres: a road or edge right next to a block counts as that block
+const nearCache = new Map();
+function nearestBlock(x, y) {                           // { b, d }: d = 0 inside, else distance to the outline
+  const key = Math.round(x) + ',' + Math.round(y);
+  if (nearCache.has(key)) return nearCache.get(key);
+  let best = null, bd = Infinity;
+  for (const b of SITE.blocks) {
+    for (const r of b.rings) {
+      if (r.length < 6) continue;
+      if (pip(x, y, r)) { best = b; bd = 0; break; }
+      for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+        const ax = r[j], ay = r[j + 1], dx = r[i] - ax, dy = r[i + 1] - ay, L = dx * dx + dy * dy;
+        const t = L ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / L)) : 0;
+        const d = Math.hypot(x - ax - t * dx, y - ay - t * dy);
+        if (d < bd) { bd = d; best = b; }
+      }
+    }
+    if (bd === 0) break;
+  }
+  const res = { b: best, d: bd };
+  if (nearCache.size > 3000) nearCache.clear();
+  nearCache.set(key, res);
+  return res;
+}
+const blockFor = (x, y) => { const n = nearestBlock(x, y); return n.b && n.d <= NEAR_IN ? n.b : null; };
 function blockBox(b) {
   let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
   for (const r of b.rings) for (let i = 0; i < r.length; i += 2) { x0 = Math.min(x0, r[i]); x1 = Math.max(x1, r[i]); y0 = Math.min(y0, r[i + 1]); y1 = Math.max(y1, r[i + 1]); }
@@ -1872,7 +1911,7 @@ function openWork(mid) {
     const pb = $('#wPinHere'); if (pb) pb.disabled = !near;
     const h = $('#wHint'); if (h) h.textContent = tt(near ? 'wHintPin' : 'wHintZoom');
   };
-  const placePin = p => { const s = stop(), b = blockAt(p.x, p.y); s.x = Math.round(p.x); s.y = Math.round(p.y); s.b = b ? b.id : ''; delete s.gps; };
+  const placePin = p => { const s = stop(), b = blockFor(p.x, p.y); s.x = Math.round(p.x); s.y = Math.round(p.y); s.b = b ? b.id : ''; delete s.gps; };
   const draw = () => {
     const sd = curDay(), src = srcOf(), m = mach(), s = stop();
     const workingNow = Number(sd.hours[m.id]) > 0;
@@ -2039,7 +2078,7 @@ function consDoc(c) {
   for (const g of groups) { const n = g.ms.reduce((a, m) => a + (lines(g.d, m) > 1 ? 1 + (lines(g.d, m) - 1) * 0.5 : 1), 0);
     if (rows + n > 20 && cur.length) { pages.push(cur); cur = []; rows = 0; } cur.push(g); rows += n; }
   if (cur.length) pages.push(cur);
-  const nLeg = (() => { let n = 0; for (const m of S.machines) { const set = new Set(); for (const { d } of groups) for (const st of stopsOf(workOf(d, m.id))) set.add(st.b || 'o' + (st.place || '')); n += set.size; } return n; })();
+  const nLeg = (() => { let n = 0; for (const m of S.machines) { const set = new Set(); for (const { d } of groups) for (const st of stopsOf(workOf(d, m.id))) set.add(effB(st) || 'o' + (st.place || '')); n += set.size; } return n; })();
   const legPages = nLeg > 8 ? Math.ceil((nLeg - 8) / 24) : 0;
   const total = pages.length + 1 + legPages;
   const docNo = c.custom ? `STL-WC-${(c.calc.to || todayIso()).replace(/-/g, '')}` : `STL-WC-${c.year}-${String(c.no).padStart(3, '0')}`;
@@ -2079,10 +2118,10 @@ function consDoc(c) {
       const w = workOf(d, m.id); if (!w || !worked(d, m.id)) continue;
       km += travelOf(d.date, m, w).km;
       for (const s of stopsOf(w)) {
-        const key = s.b || 'out:' + (s.place || '');
+        const key = effB(s) || 'out:' + (s.place || '');
         const e = byPlace.get(key) || { s, days: [] }; e.days.push(d.date); byPlace.set(key, e);
         let x = s.x, y = s.y, approx = false;
-        if (x == null) { const blk = s.b && SITE.blocks.find(z => z.id === s.b); if (!blk) continue; ({ x, y } = centroidOf(blk)); approx = true; }
+        if (x == null) { const blk = effB(s) && SITE.blocks.find(z => z.id === effB(s)); if (!blk) continue; ({ x, y } = centroidOf(blk)); approx = true; }
         const c = clusters.find(c => c.approx === approx && Math.hypot(c.x - x, c.y - y) < 20);
         if (c) { c.days.push(d.date); c.n++; c.sx += x; c.sy += y; c.x = c.sx / c.n; c.y = c.sy / c.n; }
         else clusters.push({ x, y, sx: x, sy: y, n: 1, days: [d.date], approx });
@@ -2137,7 +2176,7 @@ function consCsv(c) {
       const legHow = s => { const l = legOf(s); return l ? (l.shuttle ? 'one round trip, ' : '') + (l.road ? 'along site roads' : 'straight line x ' + ROAD_F) : ''; };
       (st.length ? st : [null]).forEach((s, i) => {
         const E = s && s.x != null ? Math.round(s.x + SITE.ox) : '', N = s && s.y != null ? Math.round(SITE.h - s.y + SITE.oy) : '';
-        out.push([d.date, WD.en[dow(d.date)], m.name, num(Number(d.hours[m.id])), s ? i + 1 : '', s ? placeOne(s, 'en') : 'not marked', s ? (s.b || '').replace('-', '/') : '', E, N,
+        out.push([d.date, WD.en[dow(d.date)], m.name, num(Number(d.hours[m.id])), s ? i + 1 : '', s ? placeOne(s, 'en') : 'not marked', s ? (effB(s) ? blockLabel(effB(s)) : '') : '', E, N,
           s ? workOne(m, s, 'en') : '', s ? workOne(m, s, 'hu') : '', s && isShuttle(s) ? 'yes' : '', s ? legTo(s) : '', s ? legHow(s) : '',
           i === 0 && tr.km >= 0.05 ? num((Math.round(tr.km * 10) / 10).toFixed(1)) : '', i === 0 && tr.km >= 0.05 ? Math.round(tr.min) : '',
           validSig(d.sig.contractor, h)?.name || '', validSig(d.sig.client, h)?.name || ''].map(q).join(';'));
@@ -2265,7 +2304,7 @@ function renderWork() {
     const ms = S.machines.filter(m => worked(d, m.id)), miss = ms.filter(m => !workDone(workOf(d, m.id))).length;
     const mk = markState(d.date);
     return `<button class="hrow mk-${mk}" data-a="workDay" data-v="${d.date}"><span class="hd"><b>${esc(shortDate(d.date))}</b> <span class="muted">${esc(wdName(d.date))}</span></span>
-      <span class="hm muted">${ms.map(m => { const w = workOf(d, m.id); return w ? esc(stopsOf(w).map(s => s.b ? s.b.replace('-', '/') : s.x != null ? t('wOutside') : '?').join('→')) : '—'; }).join(' · ')}</span>
+      <span class="hm muted">${ms.map(m => { const w = workOf(d, m.id); return w ? esc(stopsOf(w).map(s => effB(s) ? blockLabel(effB(s)) : s.x != null ? t('wOutside') : '?').join('→')) : '—'; }).join(' · ')}</span>
       ${mk === 'part' ? `<span class="badge mk-part">${esc(t('wtMissingN', { n: miss }))}</span>` : markBadge(mk)}</button>`;
   }).join('');
   const rr = UI.repRange || 'week';
