@@ -259,6 +259,7 @@ body.locked .chrome,body.locked main{display:none}
 .hrow.mk-done{border-left:6px solid var(--green);background:#f3fbf5}
 .hrow.mk-part{border-left:6px solid var(--amber-line);background:#fffaf0}
 .hrow.mk-none{border-left:6px solid #d6dae1}
+#wUndo:disabled{opacity:.45}
 /* Hol-Mit tab */
 .wcardm{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--green);border-radius:14px;padding:10px;margin-bottom:10px}
 .wcardm.need{border-color:var(--amber-line);background:#fffbef}
@@ -427,6 +428,7 @@ const UIKEY = 'szihalom-worklog-ui';
 /* ------------------------------------------------------------------ i18n */
 const T = {
   hu: {
+    wUndo: 'Visszavonás', wDelPlace: '{n}. hely törlése', wClearMachine: 'A(z) {m} összes jelölésének törlése erről a napról', wClearConfirm: 'Törli a(z) {m} összes hely- és munkajelölését ({d})?', wDeleted: 'Törölve – a Visszavonás gombbal visszahozható.', wDeletedTab: 'Törölve.', wNothingUndo: 'Nincs mit visszavonni.', wtClear: 'Jelölés törlése',
     wHintZoomM: 'Nagyítson rá a gép helyére: egérgörgővel, a + gombbal, vagy kattintson a térképre. Lenyomott egérgombbal húzva mozgatja a térképet.', wHintPinM: 'Kattintson a gép pontos helyére, vagy húzza egérrel a piros jelölőt. A célkereszthez az „Ide” gombbal is leteheti.', wMapHint2M: 'Még nincs jelölő – nagyítson rá, és kattintson a gép helyére.', wPickInBlockM: '{b} kiválasztva – most kattintson a pontos helyre a blokkon belül.',
     mk_done: 'kész', mk_part: 'hiányos', mk_none: 'nincs jelölve',
     wDepoHaul: 'DEPO fuvar', wDepoFirst: 'Előbb jelölje be, honnan szállított (a rakodás helyét), utána nyomja a DEPO fuvar gombot.', wShuttle: 'Egész nap ingázott: {a} \u21C4 {b}', wShuttleHint: 'A fordulókat nem kell számolni – elég, hogy aznap ezen a két hely között fuvarozott.',
@@ -536,6 +538,7 @@ const T = {
     signedBy: '{n}, {d}', dayTot: '{h} gépóra', daysCol: 'Nap',
   },
   en: {
+    wUndo: 'Undo', wDelPlace: 'Delete place {n}', wClearMachine: 'Delete all marks of {m} for this day', wClearConfirm: 'Delete all place and work marks of {m} ({d})?', wDeleted: 'Deleted — Undo brings it back.', wDeletedTab: 'Deleted.', wNothingUndo: 'Nothing to undo.', wtClear: 'Delete marks',
     wHintZoomM: 'Zoom in on the machine’s place: mouse wheel, +, or click the map. Drag with the mouse button held to move the map.', wHintPinM: 'Click the machine’s exact place, or drag the red pin with the mouse. You can also drop it at the crosshair with “Here”.', wMapHint2M: 'No pin yet — zoom in and click the machine’s place.', wPickInBlockM: '{b} selected — now click the exact place inside the block.',
     mk_done: 'done', mk_part: 'incomplete', mk_none: 'not marked',
     wDepoHaul: 'DEPO haul', wDepoFirst: 'First mark where it loaded, then press DEPO haul.', wShuttle: 'Shuttled all day: {a} \u21C4 {b}', wShuttleHint: 'No need to count the trips — just that it hauled between these two places that day.',
@@ -1773,7 +1776,7 @@ function isCentroidPin(s) {                             // pins the old block bu
 function openWork(mid) {
   if (!SITE) return toast('No site plan');
   const md = $('#modal');
-  const ed = { mid, si: 0, stops: [], vb: null, map: null, dragging: false };
+  const ed = { mid, si: 0, stops: [], vb: null, map: null, dragging: false, hist: [] };
   const curDay = () => selDay();
   const srcOf = () => { const sd = curDay(); return sd.entry || UI.draft; };
   const mach = () => S.machines.find(x => x.id === ed.mid);
@@ -1781,7 +1784,17 @@ function openWork(mid) {
   const load = () => {
     const w = (srcOf().work || {})[ed.mid];
     ed.stops = clone(stopsOf(w)); if (!ed.stops.length) ed.stops = [newStop()];
-    ed.si = 0; ed.vb = null;
+    ed.si = 0; ed.vb = null; ed.hist = [];
+  };
+  const snap = () => {                                 // remember the state before a change, for Undo
+    ed.hist.push(JSON.stringify({ stops: ed.stops, si: ed.si }));
+    if (ed.hist.length > 60) ed.hist.shift();
+    const u = $('#wUndo'); if (u) u.disabled = false;
+  };
+  const undo = () => {
+    if (!ed.hist.length) { toast(t('wNothingUndo')); return; }
+    const h = JSON.parse(ed.hist.pop()); ed.stops = h.stops; ed.si = Math.min(h.si, ed.stops.length - 1);
+    draw();
   };
   const persist = () => {
     const sd = curDay(), src = srcOf(), keep = ed.stops.filter(s => !stopEmpty(s));
@@ -1793,7 +1806,7 @@ function openWork(mid) {
     if (sd.entry) { sortAll(S); save(); }
     return true;
   };
-  const close = () => { md.hidden = true; md.innerHTML = ''; document.body.style.overflow = ''; render(); };
+  const close = () => { md._undo = null; md.hidden = true; md.innerHTML = ''; document.body.style.overflow = ''; render(); };
   const stop = () => ed.stops[ed.si];
   const viewFor = () => {
     if (ed.vb) return ed.vb;
@@ -1879,11 +1892,14 @@ function openWork(mid) {
       <div class="stoptabs">${ed.stops.map((x, i) => `<button type="button" class="chip stab${i === ed.si ? ' on' : ''}" data-si="${i}">${i + 1}. ${esc(placeOne(x, S.lang) || t('wNewPlace'))}</button>`).join('')}
         <button type="button" class="chip add" id="eAdd">+ ${esc(t('wAddPlace'))}</button>
         ${SITE.blocks.some(b => b.id === 'DEPO') ? `<button type="button" class="chip depo" id="eDepo">\u{1F69A} ${esc(t('wDepoHaul'))}</button>` : ''}
-        ${ed.stops.length > 1 ? `<button type="button" class="chip del" id="eDel">\u{1F5D1} ${ed.si + 1}.</button>` : ''}</div>
+</div>
       <div class="whint" id="wHint"></div>
       <div class="wmap"><div class="mapw" id="wMap"></div><div class="xhair" id="wX" hidden></div>
         <div class="wmapbtns"><button class="btn sm" id="wGps">\u{1F4CD} ${esc(t('wGps'))}</button></div>${zoomCtl()}${mapCredit()}</div>
-      <div class="row" style="margin-top:8px"><button class="btn primary" id="wPinHere">\u{1F4CD} ${esc(t('wPinHere', { n: ed.si + 1 }))}</button><div class="wsel" id="wSel" style="flex:1">${selHtml()}</div></div>
+      <div class="row" style="margin-top:8px"><button class="btn primary" id="wPinHere">\u{1F4CD} ${esc(t('wPinHere', { n: ed.si + 1 }))}</button>
+        <button class="btn" id="wUndo" ${ed.hist.length ? '' : 'disabled'} title="Ctrl+Z">\u21B6 ${esc(t('wUndo'))}</button>
+        <button class="btn danger" id="eDel">\u{1F5D1} ${esc(t('wDelPlace', { n: ed.si + 1 }))}</button></div>
+      <div class="wsel" id="wSel">${selHtml()}</div>
       <div class="k" style="margin-top:8px">${esc(t('wBlockJump'))}</div>
       <div class="chips" id="wBlocks">${SITE.blocks.map(b => `<button type="button" class="chip${b.id === s.b ? ' on' : ''}" data-b="${b.id}">${b.label}</button>`).join('')}<button type="button" class="chip${!s.b && s.x != null ? ' on' : ''}" data-b="">${esc(t('wOutside'))}</button></div>
       <input class="winput" id="wPlace" type="text" placeholder="${esc(t('wPlacePh'))}" value="${esc(s.place)}">
@@ -1891,7 +1907,8 @@ function openWork(mid) {
       <div class="chips" id="wActs">${actList(m).map(([k, hu, en]) => `<button type="button" class="chip act${s.acts.includes(k) ? ' on' : ''}" data-k="${k}">${esc(S.lang === 'en' ? en : hu)}</button>`).join('')}</div>
       <input class="winput" id="wNote" type="text" placeholder="${esc(t('wNotePh'))}" value="${esc(s.note)}">
       ${ed.si > 0 ? `<label class="trips chk"><input type="checkbox" id="tShuttle" ${isShuttle(s) ? 'checked' : ''}><span><b>\u{1F69A} ${esc(t('wShuttle', { a: placeOne(ed.stops[ed.si - 1], S.lang) || '?', b: placeOne(s, S.lang) || '?' }))}</b><span class="muted small" style="display:block">${esc(t('wShuttleHint'))}</span></span></label>` : ''}
-      <div id="wTravel">${travelHtml()}</div>`}
+      <div id="wTravel">${travelHtml()}</div>
+      <div style="margin-top:12px"><button class="btn sm danger" id="eClearM">\u{1F5D1} ${esc(t('wClearMachine', { m: m.name }))}</button></div>`}
       <div class="row wfoot"><button class="btn" id="wSame">↻ ${esc(t('wSame'))}</button><span class="spacer"></span>
         <button class="btn" id="wDone">✓ ${esc(t('wDone'))}</button><button class="btn primary" id="wNext">${esc(t('wNextMachine'))} →</button></div>
     </div>`;
@@ -1900,10 +1917,10 @@ function openWork(mid) {
         vb: viewFor(), render: mapSvg, onView: viewChanged,
         onTap: (p, api) => {
           if (api.vb[2] > ZOOM_PIN) api.set([p.x - 180, p.y - 130, 360, 260]);   // zoomed out: a tap zooms in on that spot
-          else { placePin(p); refresh(); }
+          else { snap(); placePin(p); refresh(); }
         },
         pinAt: () => stop().x != null ? { x: stop().x, y: stop().y } : null,
-        onPinMove: p => { ed.dragging = true; placePin(p); },
+        onPinMove: p => { if (!ed.dragging) snap(); ed.dragging = true; placePin(p); },
         onPinEnd: () => { ed.dragging = false; refresh(); },
       });
       zoomButtons(md.querySelector('.wmap'), ed.map);
@@ -1921,7 +1938,7 @@ function openWork(mid) {
     $('#wSame').onclick = () => {
       const sd = curDay(), prev = S.days.filter(d => d.date < sd.date && workOf(d, ed.mid)).at(-1);
       if (!prev) return toast(t('wNoPrev'));
-      ed.stops = clone(stopsOf(prev.work[ed.mid])); ed.si = 0; ed.vb = null; draw();
+      snap(); ed.stops = clone(stopsOf(prev.work[ed.mid])); ed.si = 0; ed.vb = null; draw();
     };
     $('#wDone').onclick = () => { if (persist()) close(); };
     $('#wNext').onclick = () => go(() => {
@@ -1933,10 +1950,11 @@ function openWork(mid) {
     });
     if (!ed.map) return;
     md.querySelectorAll('.stab').forEach(c => c.onclick = () => { ed.si = Number(c.dataset.si); ed.vb = null; draw(); });
-    $('#eAdd').onclick = () => { const v = ed.map.vb; ed.stops.push(newStop()); ed.si = ed.stops.length - 1; draw(); ed.map.set(v); };
+    $('#eAdd').onclick = () => { const v = ed.map.vb; snap(); ed.stops.push(newStop()); ed.si = ed.stops.length - 1; draw(); ed.map.set(v); };
     if ($('#eDepo')) $('#eDepo').onclick = () => {           // loading place -> Depo, n round trips
       const depo = SITE.blocks.find(b => b.id === 'DEPO'), from = ed.stops.find(x => x.x != null && x.b !== 'DEPO');
       if (!from) { toast(t('wDepoFirst')); return; }
+      snap();
       let i = ed.stops.findIndex(x => x.b === 'DEPO');
       if (i < 0) { i = ed.stops.findIndex((x, k) => k > 0 && stopEmpty(x)); if (i < 0) { ed.stops.push(newStop()); i = ed.stops.length - 1; } }
       const d = ed.stops[i], c = centroidOf(depo);
@@ -1945,10 +1963,21 @@ function openWork(mid) {
       if (mach().kind === 'tipper' && !d.acts.includes('depot')) d.acts = [...d.acts, 'depot'];
       ed.si = i; ed.vb = padVB(boxOf([from, d], 300, 220), 0.25); draw();
     };
-    if ($('#tShuttle')) $('#tShuttle').onchange = e => { const s = stop(); delete s.trips; if (e.target.checked) s.shuttle = true; else delete s.shuttle; refresh(); };
-    if ($('#eDel')) $('#eDel').onclick = () => { ed.stops.splice(ed.si, 1); ed.si = Math.max(0, ed.si - 1); ed.vb = null; draw(); };
-    $('#wPinHere').onclick = () => { placePin(ed.map.centre()); refresh(); };
+    if ($('#tShuttle')) $('#tShuttle').onchange = e => { snap(); const s = stop(); delete s.trips; if (e.target.checked) s.shuttle = true; else delete s.shuttle; refresh(); };
+    $('#eDel').onclick = () => {                      // delete the selected place (the only one is emptied instead)
+      snap();
+      if (ed.stops.length > 1) { ed.stops.splice(ed.si, 1); ed.si = Math.max(0, ed.si - 1); } else ed.stops = [newStop()];
+      draw(); toast(t('wDeleted'));
+    };
+    $('#eClearM').onclick = () => {
+      if (!confirm(t('wClearConfirm', { m: mach().name, d: uiDate(curDay().date) }))) return;
+      snap(); ed.stops = [newStop()]; ed.si = 0; draw(); toast(t('wDeleted'));
+    };
+    $('#wUndo').onclick = undo;
+    md._undo = undo;
+    $('#wPinHere').onclick = () => { snap(); placePin(ed.map.centre()); refresh(); };
     md.querySelectorAll('#wBlocks .chip').forEach(c => c.onclick = () => {
+      snap();
       const s = stop(), b = SITE.blocks.find(x => x.id === c.dataset.b);
       if (b) {                                         // a block button only shows the block: the worker puts the pin on the exact spot
         if (!(s.x != null && blockAt(s.x, s.y) === b)) s.x = s.y = null;
@@ -1957,9 +1986,10 @@ function openWork(mid) {
       refresh();
     });
     md.querySelectorAll('#wActs .chip').forEach(c => c.onclick = () => {
-      const s = stop(), k = c.dataset.k; s.acts = s.acts.includes(k) ? s.acts.filter(x => x !== k) : [...s.acts, k]; c.classList.toggle('on'); updateDayChip();
+      snap(); const s = stop(), k = c.dataset.k; s.acts = s.acts.includes(k) ? s.acts.filter(x => x !== k) : [...s.acts, k]; c.classList.toggle('on'); updateDayChip();
       const tab = md.querySelector(`.stab[data-si="${ed.si}"]`); if (tab) tab.textContent = `${ed.si + 1}. ${placeOne(s, S.lang) || t('wNewPlace')}`;
     });
+    $('#wPlace').onfocus = snap; $('#wNote').onfocus = snap;
     $('#wPlace').oninput = e => { stop().place = e.target.value.trim(); updateDayChip(); };
     $('#wNote').oninput = e => { stop().note = e.target.value.trim(); updateDayChip(); };
     $('#wGps').onclick = () => {
@@ -1970,7 +2000,7 @@ function openWork(mid) {
         const x = Math.round(E - SITE.ox), y = Math.round(SITE.h - (N - SITE.oy));
         if ($('#wGps')) $('#wGps').disabled = false;
         if (x < 0 || y < 0 || x > SITE.w || y > SITE.h) { toast(t('wGpsOff')); return; }
-        placePin({ x, y }); stop().gps = { E: Math.round(E), N: Math.round(N), acc: Math.round(pos.coords.accuracy) };
+        snap(); placePin({ x, y }); stop().gps = { E: Math.round(E), N: Math.round(N), acc: Math.round(pos.coords.accuracy) };
         ed.map.set([x - 150, y - 110, 300, 220]); refresh();
       }, () => { if ($('#wGps')) $('#wGps').disabled = false; toast(t('wGpsErr')); }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
     };
@@ -2219,6 +2249,7 @@ function renderWork() {
           : `<div class="wmplace warnc">${esc(t('wtNotYet'))}</div>`}
       </div>
       ${!on ? `<button class="btn wmbtn" data-a="workOn" data-m="${esc(m.id)}">\u2713 ${esc(t('wWorkedOnShort'))}</button>` : ''}
+      ${on && w ? `<button class="btn ghost danger sm" data-a="workClear" data-m="${esc(m.id)}" title="${esc(t('wtClear'))}" aria-label="${esc(t('wtClear'))}">\u{1F5D1}</button>` : ''}
       ${on ? `<button class="btn ${w ? '' : 'primary'} wmbtn" data-a="workM" data-m="${esc(m.id)}">\u{1F4CD} ${esc(w ? t('wtEdit') : t('wtMark'))}</button>` : ''}
     </div>`;
   }).join('');
@@ -2813,6 +2844,13 @@ const actions = {
   lang(b) { S.lang = b.dataset.v; save(); render(); },
   pickDay(b) { UI.sel = b.dataset.v; UI.tab = 'days'; render(); window.scrollTo(0, 0); },
   workStart() { openWork(null); },
+  workClear(b) {
+    const sd = selDay(), src = sd.entry || UI.draft, m = S.machines.find(x => x.id === b.dataset.m);
+    if (!confirm(t('wClearConfirm', { m: m.name, d: uiDate(sd.date) }))) return;
+    if (sd.entry && !guardDayEdit(sd.entry)) return;
+    if (src.work) delete src.work[m.id];
+    sd.entry ? commit() : render(); toast(t('wDeletedTab'));
+  },
   repRange(b) { UI.repRange = b.dataset.v; render(); },
   repXls() {
     const [a, b] = repSpan(), c = rangeCtx(a, b);
@@ -2995,6 +3033,10 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) saveN
 window.addEventListener('resize', () => { if (UI.tab === 'docs') fitDocs(); });
 window.addEventListener('beforeprint', () => document.querySelectorAll('.xdoc,.cons-page').forEach(p => p.style.zoom = 1));
 window.addEventListener('afterprint', () => fitDocs());
+document.addEventListener('keydown', e => {
+  const md = $('#modal');
+  if (md && md._undo && !md.hidden && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !/INPUT|TEXTAREA/.test(e.target.tagName)) { e.preventDefault(); md._undo(); return; }
+});
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').hidden) $('#padCancel')?.click(); });
 
 /* ============================================================ SELF-CHECK
