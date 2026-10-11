@@ -238,7 +238,7 @@ body.locked .chrome,body.locked main{display:none}
 .wmap{position:relative}
 .mapcredit{position:absolute;left:6px;bottom:4px;font-size:10px;color:#fff;text-shadow:0 0 3px #000;pointer-events:none}
 .chip.depo{background:#fff4e5;border-color:#e0a74a;color:#7a4b00;font-weight:700}
-.trips{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;background:#fff8ec;border:1px solid #f0d199;border-radius:10px;padding:10px 12px}
+.trips{display:flex;align-items:center;gap:12px;margin-top:12px;background:#fff8ec;border:1px solid #f0d199;border-radius:10px;padding:10px 12px}
 .tstep2{display:flex;align-items:center;gap:4px;flex:0 0 auto}
 .tstep2 button{width:42px;height:42px;border-radius:10px;border:1px solid var(--rule);background:#fff;font-size:22px;cursor:pointer;color:var(--navy)}
 .tstep2 b{min-width:58px;text-align:center;font-size:15px}
@@ -410,7 +410,7 @@ const UIKEY = 'szihalom-worklog-ui';
 /* ------------------------------------------------------------------ i18n */
 const T = {
   hu: {
-    wDepoHaul: 'DEPO fuvar', wDepoFirst: 'Előbb jelölje be, honnan szállított (a rakodás helyét), utána nyomja a DEPO fuvar gombot.', wTrips: 'Hányszor fordult {a} és {b} között (oda-vissza)?', wTripsHint: 'Egy forduló = oda és vissza. Ha csak egyszer ment át: „1 út”.', wTripsOne: '1 út',
+    wDepoHaul: 'DEPO fuvar', wDepoFirst: 'Előbb jelölje be, honnan szállított (a rakodás helyét), utána nyomja a DEPO fuvar gombot.', wShuttle: 'Egész nap ingázott: {a} \u21C4 {b}', wShuttleHint: 'A fordulókat nem kell számolni – elég, hogy aznap ezen a két hely között fuvarozott.',
     recovered: 'Korábbi adatok visszaállítva ({n} mentés).', recoverNeedPw: 'Félretett régebbi adatok vannak ezen a telefonon. A visszaállításhoz zárja le (🔒), és lépjen be újra a jelszóval.',
     wHintZoom: 'Nagyítson rá a gép helyére: két ujjal széthúzva, a + gombbal, vagy koppintson a térképre. Egy ujjal húzva mozgatja a térképet.',
     wHintPin: 'Koppintson a gép pontos helyére, vagy húzza a piros jelölőt. A célkereszthez a „Ide” gombbal is leteheti.',
@@ -517,7 +517,7 @@ const T = {
     signedBy: '{n}, {d}', dayTot: '{h} gépóra', daysCol: 'Nap',
   },
   en: {
-    wDepoHaul: 'DEPO haul', wDepoFirst: 'First mark where it loaded, then press DEPO haul.', wTrips: 'How many round trips between {a} and {b}?', wTripsHint: 'One round trip = there and back. If it only moved over once: “1 way”.', wTripsOne: '1 way',
+    wDepoHaul: 'DEPO haul', wDepoFirst: 'First mark where it loaded, then press DEPO haul.', wShuttle: 'Shuttled all day: {a} \u21C4 {b}', wShuttleHint: 'No need to count the trips — just that it hauled between these two places that day.',
     recovered: 'Earlier data restored ({n} saved set(s)).', recoverNeedPw: 'Older data is kept aside on this phone. To restore it, lock (🔒) and sign in again with the password.',
     wHintZoom: 'Zoom in on the machine’s place: spread two fingers, use +, or tap the map. Drag with one finger to move the map.',
     wHintPin: 'Tap the machine’s exact place, or drag the red pin. You can also drop it at the crosshair with “Here”.',
@@ -885,7 +885,7 @@ function hashStr(str) { let h = 2166136261; for (let i = 0; i < str.length; i++)
 function dayKey(d) {
   const w = d.work || {};
   const marks = Object.keys(w).sort().filter(k => !emptyWork(w[k]))     // empty = nothing added, so older signatures stay valid
-    .map(k => `${k}@` + stopsOf(w[k]).map(x => `${x.b || ''}:${x.x ?? ''},${x.y ?? ''}:${(x.acts || []).join('+')}:${x.place || ''}:${x.note || ''}${x.trips ? ':x' + x.trips : ''}`).join('>'));
+    .map(k => `${k}@` + stopsOf(w[k]).map(x => `${x.b || ''}:${x.x ?? ''},${x.y ?? ''}:${(x.acts || []).join('+')}:${x.place || ''}:${x.note || ''}${isShuttle(x) ? ':S' : ''}`).join('>'));
   return [d.date, Number(d.start), ...Object.keys(d.hours).sort().map(k => k + ':' + Number(d.hours[k] || 0)), ...marks].join('|');
 }
 const dayHash = d => hashStr(dayKey(d));
@@ -1374,8 +1374,8 @@ function placeOne(s, lang) {
   const where = s.b ? s.b.replace('-', '/') : (s.x != null ? (lang === 'en' ? 'Outside the blocks' : 'Blokkon kívül') : '');
   return [where, s.place].filter(Boolean).join(' – ');
 }
-const tripsText = (n, lang) => n ? (lang === 'en' ? `${n} round trip${n > 1 ? 's' : ''}` : `${n} forduló`) : '';
-const workOne = (m, s, lang) => [...(s.acts || []).map(k => actLabel(m, k, lang)), s.note, tripsText(Number(s.trips) || 0, lang)].filter(Boolean).join(', ');
+const isShuttle = s => !!(s && (s.shuttle || s.trips));
+const workOne = (m, s, lang) => [...(s.acts || []).map(k => actLabel(m, k, lang)), s.note, isShuttle(s) ? (lang === 'en' ? 'shuttling here all day' : 'egész nap ide ingázott') : ''].filter(Boolean).join(', ');
 const placeText = (w, lang) => stopsOf(w).map(s => placeOne(s, lang)).filter(Boolean).join(' → ');
 function workText(m, w, lang) {
   const st = stopsOf(w);
@@ -1591,19 +1591,28 @@ function travelOf(date, m, w) {
   const leg = (a, b, extra) => { const r = routeDist(a, b); return { from: a, to: b, m: r.m, pts: r.pts, road: r.road, ...extra }; };
   if (pv && st.length && Math.hypot(pv.s.x - st[0].x, pv.s.y - st[0].y) > 40) legs.push(leg(pv.s, st[0], { prev: pv.date }));
   for (let i = 1; i < st.length; i++) {
-    const n = Number(st[i].trips) || 0, l = leg(st[i - 1], st[i], { trips: n });
-    l.one = l.m; if (n) l.m = l.one * 2 * n;           // shuttle: n x there and back
+    const sh = isShuttle(st[i]), l = leg(st[i - 1], st[i], { shuttle: sh });
+    l.one = l.m; if (sh) l.m = 0;                      // all-day shuttle: trips are not counted, so no total is invented
     legs.push(l);
   }
   const km = legs.reduce((a, l) => a + l.m, 0) / 1000;
   return { legs, km, min: km / speedOf(m) * 60, prev: pv, road: legs.some(l => l.road), line: legs.some(l => !l.road) };
 }
 function travelText(tr, lang) {
-  if (!tr || !tr.legs.length || tr.km < 0.05) return '';
-  const km = (Math.round(tr.km * 10) / 10).toFixed(1), kmS = lang === 'en' ? km : km.replace('.', ',');
-  const h = Math.floor(tr.min / 60), mn = Math.round(tr.min % 60);
-  const time = h ? (lang === 'en' ? `${h} h ${mn} min` : `${h} óra ${mn} perc`) : (lang === 'en' ? `${mn} min` : `${mn} perc`);
-  return `${kmS} km · ~${time}`;
+  if (!tr) return '';
+  const out = [];
+  if (tr.km >= 0.05) {
+    const km = (Math.round(tr.km * 10) / 10).toFixed(1), kmS = lang === 'en' ? km : km.replace('.', ',');
+    const h = Math.floor(tr.min / 60), mn = Math.round(tr.min % 60);
+    const time = h ? (lang === 'en' ? `${h} h ${mn} min` : `${h} óra ${mn} perc`) : (lang === 'en' ? `${mn} min` : `${mn} perc`);
+    out.push(`${kmS} km \u00b7 ~${time}`);
+  }
+  for (const l of tr.legs.filter(x => x.shuttle)) {
+    const rt = (Math.round(l.one * 2 / 100) / 10).toFixed(1);
+    out.push(lang === 'en' ? `all-day shuttle ${placeOne(l.from, 'en')} \u21C4 ${placeOne(l.to, 'en')}: ${rt} km per round trip`
+      : `egész napos ingázás ${placeOne(l.from, 'hu')} \u21C4 ${placeOne(l.to, 'hu')}: ${rt.replace('.', ',')} km / forduló`);
+  }
+  return out.join(' \u00b7 ');
 }
 
 /* ---- set a machine to 'worked' on the selected day (new or idle machine) */
@@ -1784,8 +1793,7 @@ function openWork(mid) {
   const travelHtml = () => {
     const m = mach(), tr = travelOf(curDay().date, m, { stops: ed.stops });
     const km = v => (Math.round(v / 100) / 10).toFixed(1).replace('.', S.lang === 'en' ? '.' : ',');
-    const shuttles = tr.legs.filter(l => l.trips).map(l => `${tripsText(l.trips, S.lang)} \u00d7 2 \u00d7 ${km(l.one)} km`).join('; ');
-    return travelText(tr, S.lang) ? `<div class="travel">\u{1F69C} ${esc(t('wTravel'))}: <b>${esc(travelText(tr, S.lang))}</b>${shuttles ? `<div class="small">${esc(shuttles)}</div>` : ''}<div class="small muted">${esc(t(tr.road && !tr.line ? 'wTravelRoad' : tr.road ? 'wTravelMixed' : 'wTravelNote', { v: speedOf(m), f: String(ROAD_F).replace('.', S.lang === 'en' ? '.' : ',') }))}${tr.legs.some(l => l.prev) ? ' ' + esc(t('wTravelPrev')) : ''}</div></div>` : '';
+    return travelText(tr, S.lang) ? `<div class="travel">\u{1F69C} ${esc(t('wTravel'))}: <b>${esc(travelText(tr, S.lang))}</b><div class="small muted">${esc(t(tr.road && !tr.line ? 'wTravelRoad' : tr.road ? 'wTravelMixed' : 'wTravelNote', { v: speedOf(m), f: String(ROAD_F).replace('.', S.lang === 'en' ? '.' : ',') }))}${tr.legs.some(l => l.prev) ? ' ' + esc(t('wTravelPrev')) : ''}</div></div>` : '';
   };
   const refresh = () => {                              // after a pin or block change: no full redraw (keeps the view and the scroll)
     if (!ed.map) return;
@@ -1831,8 +1839,7 @@ function openWork(mid) {
       <div class="k" style="margin-top:14px">④ ${esc(t('wStepWhat', { n: ed.si + 1 }))}</div>
       <div class="chips" id="wActs">${actList(m).map(([k, hu, en]) => `<button type="button" class="chip act${s.acts.includes(k) ? ' on' : ''}" data-k="${k}">${esc(S.lang === 'en' ? en : hu)}</button>`).join('')}</div>
       <input class="winput" id="wNote" type="text" placeholder="${esc(t('wNotePh'))}" value="${esc(s.note)}">
-      ${ed.si > 0 ? `<div class="trips"><div class="small"><b>\u{1F69A} ${esc(t('wTrips', { a: `${ed.si}. ${placeOne(ed.stops[ed.si - 1], S.lang) || '?'}`, b: `${ed.si + 1}. ${placeOne(s, S.lang) || '?'}` }))}</b><div class="muted">${esc(t('wTripsHint'))}</div></div>
-        <div class="tstep2"><button type="button" id="tMinus" aria-label="-">\u2212</button><b id="tVal">${s.trips ? s.trips : esc(t('wTripsOne'))}</b><button type="button" id="tPlus" aria-label="+">+</button></div></div>` : ''}
+      ${ed.si > 0 ? `<label class="trips chk"><input type="checkbox" id="tShuttle" ${isShuttle(s) ? 'checked' : ''}><span><b>\u{1F69A} ${esc(t('wShuttle', { a: placeOne(ed.stops[ed.si - 1], S.lang) || '?', b: placeOne(s, S.lang) || '?' }))}</b><span class="muted small" style="display:block">${esc(t('wShuttleHint'))}</span></span></label>` : ''}
       <div id="wTravel">${travelHtml()}</div>`}
       <div class="row wfoot"><button class="btn" id="wSame">↻ ${esc(t('wSame'))}</button><span class="spacer"></span>
         <button class="btn" id="wDone">✓ ${esc(t('wDone'))}</button><button class="btn primary" id="wNext">${esc(t('wNextMachine'))} →</button></div>
@@ -1883,12 +1890,11 @@ function openWork(mid) {
       if (i < 0) { i = ed.stops.findIndex((x, k) => k > 0 && stopEmpty(x)); if (i < 0) { ed.stops.push(newStop()); i = ed.stops.length - 1; } }
       const d = ed.stops[i], c = centroidOf(depo);
       if (d.x == null || d.b !== 'DEPO') Object.assign(d, { b: 'DEPO', x: c.x, y: c.y });
-      d.trips = d.trips || 1;
+      delete d.trips; d.shuttle = true;
       if (mach().kind === 'tipper' && !d.acts.includes('depot')) d.acts = [...d.acts, 'depot'];
       ed.si = i; ed.vb = padVB(boxOf([from, d], 300, 220), 0.25); draw();
     };
-    const setTrips = n => { const s = stop(); if (n > 0) s.trips = n; else delete s.trips; $('#tVal').textContent = s.trips || t('wTripsOne'); refresh(); };
-    if ($('#tPlus')) { $('#tPlus').onclick = () => setTrips((Number(stop().trips) || 0) + 1); $('#tMinus').onclick = () => setTrips((Number(stop().trips) || 0) - 1); }
+    if ($('#tShuttle')) $('#tShuttle').onchange = e => { const s = stop(); delete s.trips; if (e.target.checked) s.shuttle = true; else delete s.shuttle; refresh(); };
     if ($('#eDel')) $('#eDel').onclick = () => { ed.stops.splice(ed.si, 1); ed.si = Math.max(0, ed.si - 1); ed.vb = null; draw(); };
     $('#wPinHere').onclick = () => { placePin(ed.map.centre()); refresh(); };
     md.querySelectorAll('#wBlocks .chip').forEach(c => c.onclick = () => {
@@ -2040,18 +2046,18 @@ function consCsv(c) {
   const q = v => { const s = String(v ?? ''); return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
   const num = v => String(v).replace('.', ',');
   const out = [['Date', 'Weekday', 'Machine', 'Hours', 'Place no.', 'Location', 'Block', 'Grid E (UTM 34N)', 'Grid N (UTM 34N)', 'Work carried out', 'Munka (HU)',
-    'Round trips to this place', 'Travel to this place (km)', 'Measured', 'Day travel (km)', 'Day travel (min, est.)', 'Contractor signed', 'Client signed'].join(';')];
+    'All-day shuttle', 'Travel to this place (km)', 'Measured', 'Day travel (km)', 'Day travel (min, est.)', 'Contractor signed', 'Client signed'].join(';')];
   for (const { d, ms } of consRows(c)) {
     const h = dayHash(d);
     for (const m of ms) {
       const w = workOf(d, m.id), st = stopsOf(w), tr = w ? travelOf(d.date, m, w) : { legs: [], km: 0, min: 0 };
       const legOf = s => tr.legs.find(x => x.to === s);
-      const legTo = s => { const l = legOf(s); return l ? num((Math.round(l.m / 100) / 10).toFixed(1)) : ''; };
-      const legHow = s => { const l = legOf(s); return l ? (l.road ? 'along site roads' : 'straight line x ' + ROAD_F) : ''; };
+      const legTo = s => { const l = legOf(s); return l ? num((Math.round((l.shuttle ? l.one * 2 : l.m) / 100) / 10).toFixed(1)) : ''; };
+      const legHow = s => { const l = legOf(s); return l ? (l.shuttle ? 'one round trip, ' : '') + (l.road ? 'along site roads' : 'straight line x ' + ROAD_F) : ''; };
       (st.length ? st : [null]).forEach((s, i) => {
         const E = s && s.x != null ? Math.round(s.x + SITE.ox) : '', N = s && s.y != null ? Math.round(SITE.h - s.y + SITE.oy) : '';
         out.push([d.date, WD.en[dow(d.date)], m.name, num(Number(d.hours[m.id])), s ? i + 1 : '', s ? placeOne(s, 'en') : 'not marked', s ? (s.b || '').replace('-', '/') : '', E, N,
-          s ? workOne(m, s, 'en') : '', s ? workOne(m, s, 'hu') : '', s && s.trips ? s.trips : '', s ? legTo(s) : '', s ? legHow(s) : '',
+          s ? workOne(m, s, 'en') : '', s ? workOne(m, s, 'hu') : '', s && isShuttle(s) ? 'yes' : '', s ? legTo(s) : '', s ? legHow(s) : '',
           i === 0 && tr.km >= 0.05 ? num((Math.round(tr.km * 10) / 10).toFixed(1)) : '', i === 0 && tr.km >= 0.05 ? Math.round(tr.min) : '',
           validSig(d.sig.contractor, h)?.name || '', validSig(d.sig.client, h)?.name || ''].map(q).join(';'));
       });
