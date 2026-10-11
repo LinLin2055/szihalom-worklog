@@ -242,6 +242,20 @@ body.locked .chrome,body.locked main{display:none}
 .tstep2{display:flex;align-items:center;gap:4px;flex:0 0 auto}
 .tstep2 button{width:42px;height:42px;border-radius:10px;border:1px solid var(--rule);background:#fff;font-size:22px;cursor:pointer;color:var(--navy)}
 .tstep2 b{min-width:58px;text-align:center;font-size:15px}
+.chip.dchip.st-done{background:#dff3e6;border-color:#1e7b45;color:#14532d;font-weight:700}
+.chip.dchip.st-part{background:#fff2cc;border-color:#e0b84a;color:#5a4300;font-weight:700}
+.chip.dchip.st-none{background:#fff;border-color:var(--rule);color:#1c2230}
+.chip.dchip.on{box-shadow:0 0 0 3px var(--navy);border-color:var(--navy)}
+.mklegend{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-size:12px;color:var(--grey);margin:4px 2px 0}
+.mklegend span{display:inline-block;width:14px;height:14px;border-radius:4px;border:1px solid var(--rule);margin-left:6px}
+.mklegend span:first-child{margin-left:0}
+.mklegend .st-done{background:#dff3e6;border-color:#1e7b45}.mklegend .st-part{background:#fff2cc;border-color:#e0b84a}.mklegend .st-none{background:#fff}
+.badge.mk-done{background:var(--green-bg);color:var(--green);border:1px solid #a8d5b7}
+.badge.mk-part{background:var(--amber);color:#6b4f00;border:1px solid var(--amber-line)}
+.badge.mk-none{background:#fff;color:var(--grey);border:1px solid var(--rule)}
+.hrow.mk-done{border-left:6px solid var(--green);background:#f3fbf5}
+.hrow.mk-part{border-left:6px solid var(--amber-line);background:#fffaf0}
+.hrow.mk-none{border-left:6px solid #d6dae1}
 /* Hol-Mit tab */
 .wcardm{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--green);border-radius:14px;padding:10px;margin-bottom:10px}
 .wcardm.need{border-color:var(--amber-line);background:#fffbef}
@@ -410,6 +424,7 @@ const UIKEY = 'szihalom-worklog-ui';
 /* ------------------------------------------------------------------ i18n */
 const T = {
   hu: {
+    mk_done: 'kész', mk_part: 'hiányos', mk_none: 'nincs jelölve',
     wDepoHaul: 'DEPO fuvar', wDepoFirst: 'Előbb jelölje be, honnan szállított (a rakodás helyét), utána nyomja a DEPO fuvar gombot.', wShuttle: 'Egész nap ingázott: {a} \u21C4 {b}', wShuttleHint: 'A fordulókat nem kell számolni – elég, hogy aznap ezen a két hely között fuvarozott.',
     recovered: 'Korábbi adatok visszaállítva ({n} mentés).', recoverNeedPw: 'Félretett régebbi adatok vannak ezen a telefonon. A visszaállításhoz zárja le (🔒), és lépjen be újra a jelszóval.',
     wHintZoom: 'Nagyítson rá a gép helyére: két ujjal széthúzva, a + gombbal, vagy koppintson a térképre. Egy ujjal húzva mozgatja a térképet.',
@@ -517,6 +532,7 @@ const T = {
     signedBy: '{n}, {d}', dayTot: '{h} gépóra', daysCol: 'Nap',
   },
   en: {
+    mk_done: 'done', mk_part: 'incomplete', mk_none: 'not marked',
     wDepoHaul: 'DEPO haul', wDepoFirst: 'First mark where it loaded, then press DEPO haul.', wShuttle: 'Shuttled all day: {a} \u21C4 {b}', wShuttleHint: 'No need to count the trips — just that it hauled between these two places that day.',
     recovered: 'Earlier data restored ({n} saved set(s)).', recoverNeedPw: 'Older data is kept aside on this phone. To restore it, lock (🔒) and sign in again with the password.',
     wHintZoom: 'Zoom in on the machine’s place: spread two fingers, use +, or tap the map. Drag with one finger to move the map.',
@@ -1718,6 +1734,17 @@ function zoomButtons(root, api) {
 }
 const zoomCtl = () => `<div class="mapzoom"><button type="button" data-z="in" aria-label="+">+</button><button type="button" data-z="out" aria-label="-">−</button><button type="button" data-z="all" aria-label="${esc(t('wFull'))}" title="${esc(t('wFull'))}">⤢</button></div>`;
 
+/* ---- how far a day is marked: 'done' / 'part' / 'none'. live = the machine being edited right now */
+function markState(date, live) {
+  const d = S.days.find(x => x.date === date) || (UI.draft && UI.draft.date === date ? UI.draft : null);
+  if (!d) return 'none';
+  const ms = S.machines.filter(m => Number(d.hours[m.id]) > 0);
+  if (!ms.length) return 'none';
+  const n = ms.filter(m => live && live.mid === m.id ? live.has : !!workOf(d, m.id)).length;
+  return n === 0 ? 'none' : n === ms.length ? 'done' : 'part';
+}
+const markBadge = st => `<span class="badge mk-${st}">${esc(t('mk_' + st))}</span>`;
+
 /* ---- the marking window: ① day ② machine ③ where (one or more places) ④ what */
 const ZOOM_PIN = 700;                                   // metres across the map: closer than this, a tap places the pin
 const shortName = m => m.name.replace(/^4-axle tipper truck/, 'Tipper').replace('Tracked excavator', 'Excavator');
@@ -1795,7 +1822,14 @@ function openWork(mid) {
     const km = v => (Math.round(v / 100) / 10).toFixed(1).replace('.', S.lang === 'en' ? '.' : ',');
     return travelText(tr, S.lang) ? `<div class="travel">\u{1F69C} ${esc(t('wTravel'))}: <b>${esc(travelText(tr, S.lang))}</b><div class="small muted">${esc(t(tr.road && !tr.line ? 'wTravelRoad' : tr.road ? 'wTravelMixed' : 'wTravelNote', { v: speedOf(m), f: String(ROAD_F).replace('.', S.lang === 'en' ? '.' : ',') }))}${tr.legs.some(l => l.prev) ? ' ' + esc(t('wTravelPrev')) : ''}</div></div>` : '';
   };
+  const liveMark = () => ({ mid: ed.mid, has: ed.stops.some(x => !stopEmpty(x)) });
+  const updateDayChip = () => {
+    const c = md.querySelector(`#eDays .chip[data-d="${curDay().date}"]`);
+    if (c) c.className = `chip dchip st-${markState(curDay().date, liveMark())} on`;
+    const mp = md.querySelector(`.mp[data-m="${ed.mid}"] i`); if (mp) mp.textContent = liveMark().has ? '\u2713' : '\u25CB';
+  };
   const refresh = () => {                              // after a pin or block change: no full redraw (keeps the view and the scroll)
+    updateDayChip();
     if (!ed.map) return;
     ed.map.paint();
     $('#wSel').innerHTML = selHtml(); $('#wTravel').innerHTML = travelHtml();
@@ -1817,8 +1851,9 @@ function openWork(mid) {
     md.innerHTML = `<div class="mcard wcard" role="dialog" aria-modal="true">
       <div class="whead"><h3>\u{1F4CD} ${esc(t('wTitle'))}</h3><button class="btn ghost sm" id="eX" aria-label="${esc(t('cancel'))}">✕</button></div>
       <div class="k">① ${esc(t('wStepDay'))}</div>
-      <div class="chips scrollx" id="eDays">${dayList().map(d => `<button type="button" class="chip${d === sd.date ? ' on' : ''}" data-d="${d}">${d === todayIso() ? esc(t('today')).replace(/^./, c => c.toUpperCase()) + ' · ' : ''}${esc(shortDate(d))}</button>`).join('')}
+      <div class="chips scrollx" id="eDays">${dayList().map(d => `<button type="button" class="chip dchip st-${markState(d, d === sd.date ? liveMark() : null)}${d === sd.date ? ' on' : ''}" data-d="${d}">${d === todayIso() ? esc(t('today')).replace(/^./, c => c.toUpperCase()) + ' · ' : ''}${esc(shortDate(d))}</button>`).join('')}
         <label class="chip chipdate">\u{1F4C5}<input type="date" id="eDate" value="${sd.date}" aria-label="${esc(t('otherDay'))}"></label></div>
+      <div class="mklegend"><span class="st-done"></span>${esc(t('mk_done'))}<span class="st-part"></span>${esc(t('mk_part'))}<span class="st-none"></span>${esc(t('mk_none'))}</div>
       <div class="k" style="margin-top:12px">② ${esc(t('wStepMachine'))}</div>
       <div class="mpick scrollx">${S.machines.map(x => { const on = Number(sd.hours[x.id]) > 0, done = !!workOf(src, x.id);
         return `<button type="button" class="mp${x.id === ed.mid ? ' on' : ''}${on ? '' : ' idle'}" data-m="${esc(x.id)}">${machineArt(x)}<span>${esc(x.name)}</span><i>${on ? (done ? '✓' : '○') : esc(t('idle'))}</i></button>`; }).join('')}
@@ -1906,11 +1941,11 @@ function openWork(mid) {
       refresh();
     });
     md.querySelectorAll('#wActs .chip').forEach(c => c.onclick = () => {
-      const s = stop(), k = c.dataset.k; s.acts = s.acts.includes(k) ? s.acts.filter(x => x !== k) : [...s.acts, k]; c.classList.toggle('on');
+      const s = stop(), k = c.dataset.k; s.acts = s.acts.includes(k) ? s.acts.filter(x => x !== k) : [...s.acts, k]; c.classList.toggle('on'); updateDayChip();
       const tab = md.querySelector(`.stab[data-si="${ed.si}"]`); if (tab) tab.textContent = `${ed.si + 1}. ${placeOne(s, S.lang) || t('wNewPlace')}`;
     });
-    $('#wPlace').oninput = e => { stop().place = e.target.value.trim(); };
-    $('#wNote').oninput = e => { stop().note = e.target.value.trim(); };
+    $('#wPlace').oninput = e => { stop().place = e.target.value.trim(); updateDayChip(); };
+    $('#wNote').oninput = e => { stop().note = e.target.value.trim(); updateDayChip(); };
     $('#wGps').onclick = () => {
       if (!navigator.geolocation) return toast(t('wGpsErr'));
       $('#wGps').disabled = true;
@@ -2181,15 +2216,16 @@ function renderWork() {
   const vb = pins.length ? padVB(boxOf(pins), 0.3) : fullVB();
   const past = S.days.filter(d => d.date !== sd.date).slice().reverse().map(d => {
     const ms = S.machines.filter(m => worked(d, m.id)), miss = ms.filter(m => !workOf(d, m.id)).length;
-    return `<button class="hrow" data-a="workDay" data-v="${d.date}"><span class="hd"><b>${esc(shortDate(d.date))}</b> <span class="muted">${esc(wdName(d.date))}</span></span>
-      <span class="hm muted">${ms.map(m => { const w = workOf(d, m.id); return w ? esc(stopsOf(w).map(s => (s.b || '').replace('-', '/') || t('wOutside')).join('→')) : '—'; }).join(' · ')}</span>
-      <span class="badge ${miss ? 'amber' : 'ok'}">${miss ? esc(t('wtMissingN', { n: miss })) : '✓ ' + esc(t('wtDone'))}</span></button>`;
+    const mk = markState(d.date);
+    return `<button class="hrow mk-${mk}" data-a="workDay" data-v="${d.date}"><span class="hd"><b>${esc(shortDate(d.date))}</b> <span class="muted">${esc(wdName(d.date))}</span></span>
+      <span class="hm muted">${ms.map(m => { const w = workOf(d, m.id); return w ? esc(stopsOf(w).map(s => s.b ? s.b.replace('-', '/') : s.x != null ? t('wOutside') : '?').join('→')) : '—'; }).join(' · ')}</span>
+      ${mk === 'part' ? `<span class="badge mk-part">${esc(t('wtMissingN', { n: miss }))}</span>` : markBadge(mk)}</button>`;
   }).join('');
   const rr = UI.repRange || 'week';
   el.innerHTML = `<div class="card">
       <div class="row" style="align-items:center">
         <button class="btn" data-a="workShift" data-v="-1" aria-label="-1">◀</button>
-        <div style="flex:1;text-align:center"><div class="bigdate" style="font-size:24px">${esc(shortDate(sd.date))}</div><div class="wd">${esc(wdName(sd.date))}${isToday ? ' · ' + esc(t('today')) : ''}</div></div>
+        <div style="flex:1;text-align:center"><div class="bigdate" style="font-size:24px">${esc(shortDate(sd.date))}</div><div class="wd">${esc(wdName(sd.date))}${isToday ? ' · ' + esc(t('today')) : ''}</div><div style="margin-top:4px">${markBadge(markState(sd.date))}</div></div>
         <button class="btn" data-a="workShift" data-v="1" aria-label="+1">▶</button>
       </div>
       <label class="other" style="margin-top:8px">\u{1F4C5} ${esc(t('otherDay'))}<input type="date" value="${sd.date}" data-c="selDate"></label>
@@ -2253,7 +2289,7 @@ function workStatusBox() {
       <span class="spacer"></span><button class="btn primary" data-a="openCons">\u{1F4C4} ${esc(t('consTitle'))} →</button></div>
     <div class="bar"><i class="b1" style="width:${pct}%;background:var(--green)"></i></div>
     ${missing.length ? `<div class="small muted" style="margin:8px 0 6px">${esc(t('wsMissing'))}</div>
-      <div class="chips">${missing.map(({ d, n }) => `<button class="chip" data-a="workDayGo" data-v="${d.date}">${esc(shortDate(d.date))} <span class="muted">(${n})</span></button>`).join('')}</div>`
+      <div class="chips">${missing.map(({ d, n }) => `<button class="chip dchip st-${markState(d.date)}" data-a="workDayGo" data-v="${d.date}">${esc(shortDate(d.date))} <span class="muted">(${n})</span></button>`).join('')}</div>`
       : `<div class="alert ok small" style="margin:8px 0 0">✓ ${esc(t('wsAll'))}</div>`}
   </div>`;
 }
