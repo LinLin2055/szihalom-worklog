@@ -274,6 +274,8 @@ body.locked .chrome,body.locked main{display:none}
 .warnc{color:#8a6100}
 .wmbtn{flex:0 0 auto}
 @media (max-width:480px){.wcardm{flex-wrap:wrap}.wmbtn{width:100%;min-height:48px;font-size:16px}}
+.gpsl{font-size:12px;color:var(--grey);font-variant-numeric:tabular-nums}
+.gpsl a{text-decoration:none;margin-left:4px}
 /* consolidation sheet (A4 landscape) */
 .cons-holder{margin:0 0 16px;overflow:hidden}
 .cons-page{width:297mm;height:209.5mm;padding:12mm 12mm 14mm;position:relative;background:#fff;color:#000;font-family:var(--serif);font-size:8.6pt;line-height:11pt;box-shadow:0 2px 12px rgba(0,0,0,.15);margin:0 auto;overflow:hidden}
@@ -298,6 +300,15 @@ body.locked .chrome,body.locked main{display:none}
 .cons-page .cmap{height:96mm;border:.5pt solid var(--rule);background:#f6f8f2;margin-bottom:3mm}
 .cons-page .cmap svg{width:100%;height:100%;display:block}
 .cons-page .lg td{height:auto;padding:2pt 5pt}
+.cons-page .gps{font-size:7pt;color:#555;font-variant-numeric:tabular-nums}
+.cons-page .dpanels{display:grid;grid-template-columns:1fr 1fr;gap:6mm}
+.cons-page .dtitle{font-weight:700;color:var(--navy);font-size:10pt;margin-bottom:1.5mm}
+.cons-page .dmap{height:70mm;border:.5pt solid var(--rule);background:#f6f8f2;margin-bottom:2mm}
+.cons-page .dmap svg{width:100%;height:100%;display:block}
+.cons-page .dt2 td{height:auto;padding:1pt 3pt;font-size:7pt;line-height:8.6pt}
+.cons-page .dt2 td:first-child{white-space:nowrap}
+.cons-page .dt2 td:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}
+.cons-page .dt2 th{font-size:7.4pt;padding:2pt 4pt}
 .cons-page .wmk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 80pt Arial,sans-serif;color:rgba(180,35,24,.08);transform:rotate(-18deg);pointer-events:none}
 /* status */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:12px}
@@ -430,6 +441,7 @@ const UIKEY = 'szihalom-worklog-ui';
 /* ------------------------------------------------------------------ i18n */
 const T = {
   hu: {
+    wDepoPin: 'Kattintson a DEPO-n a lerakás pontos helyére.', wtApproxN: '{n} pontosítandó',
     expTitle: 'Minden jelölés exportálása', expIntro: 'Kód: a teljes jelölés (helyek, munkák, órák, aláírások) titkosítva – küldje el, ebből frissül a központi adat. Excel: minden pont GPS-koordinátával és Google Maps linkkel. Google Earth: minden pont a térképen.', expCode: 'Kód (küldéshez)', expCsv: 'Excel – minden pont', expKml: 'Google Earth (KML)', codeTitle: 'Jelölések kódja', codeIntro: '{n} jelölés, {d} nap. Másolja ki, és küldje el (e-mail, üzenet). Jelszó nélkül nem olvasható.', codeLen: '{k} ezer karakter', codeCopy: 'Másolás', codeDown: 'Letöltés (.txt)', codeCopied: 'A kód a vágólapon – illessze be az üzenetbe.', close: 'Bezárás', masterIn: 'Központi adatok átvéve: {n} új tétel.',
     wUndo: 'Visszavonás', wDelPlace: '{n}. hely törlése', wClearMachine: 'A(z) {m} összes jelölésének törlése erről a napról', wClearConfirm: 'Törli a(z) {m} összes hely- és munkajelölését ({d})?', wDeleted: 'Törölve – a Visszavonás gombbal visszahozható.', wDeletedTab: 'Törölve.', wNothingUndo: 'Nincs mit visszavonni.', wtClear: 'Jelölés törlése',
     wHintZoomM: 'Nagyítson rá a gép helyére: egérgörgővel, a + gombbal, vagy kattintson a térképre. Lenyomott egérgombbal húzva mozgatja a térképet.', wHintPinM: 'Kattintson a gép pontos helyére, vagy húzza egérrel a piros jelölőt. A célkereszthez az „Ide” gombbal is leteheti.', wMapHint2M: 'Még nincs jelölő – nagyítson rá, és kattintson a gép helyére.', wPickInBlockM: '{b} kiválasztva – most kattintson a pontos helyre a blokkon belül.',
@@ -541,6 +553,7 @@ const T = {
     signedBy: '{n}, {d}', dayTot: '{h} gépóra', daysCol: 'Nap',
   },
   en: {
+    wDepoPin: 'Click the exact unloading spot inside the DEPO.', wtApproxN: '{n} need exact point',
     expTitle: 'Export every mark', expIntro: 'Code: all marks (places, jobs, hours, signatures), encrypted — send it and the main data is updated from it. Excel: every point with GPS and a Google Maps link. Google Earth: every point on the map.', expCode: 'Code (to send)', expCsv: 'Excel – every point', expKml: 'Google Earth (KML)', codeTitle: 'Marks code', codeIntro: '{n} marks, {d} days. Copy it and send it (e-mail, message). Unreadable without the password.', codeLen: '{k} thousand characters', codeCopy: 'Copy', codeDown: 'Download (.txt)', codeCopied: 'The code is on the clipboard — paste it into your message.', close: 'Close', masterIn: 'Main data taken over: {n} new items.',
     wUndo: 'Undo', wDelPlace: 'Delete place {n}', wClearMachine: 'Delete all marks of {m} for this day', wClearConfirm: 'Delete all place and work marks of {m} ({d})?', wDeleted: 'Deleted — Undo brings it back.', wDeletedTab: 'Deleted.', wNothingUndo: 'Nothing to undo.', wtClear: 'Delete marks',
     wHintZoomM: 'Zoom in on the machine’s place: mouse wheel, +, or click the map. Drag with the mouse button held to move the map.', wHintPinM: 'Click the machine’s exact place, or drag the red pin with the mouse. You can also drop it at the crosshair with “Here”.', wMapHint2M: 'No pin yet — zoom in and click the machine’s place.', wPickInBlockM: '{b} selected — now click the exact place inside the block.',
@@ -1397,7 +1410,19 @@ function actLabel(m, key, lang) {
 const stopEmpty = s => !s || (!s.b && s.x == null && !(s.acts || []).length && !s.note && !s.place);
 const stopsOf = w => !w ? [] : (Array.isArray(w.stops) ? w.stops : [w]).filter(s => !stopEmpty(s));
 const emptyWork = w => stopsOf(w).length === 0;
-const workDone = w => stopsOf(w).some(s => s.b || s.x != null);     // marked = has a place; the job is optional
+const isExact = s => !!s && s.x != null && !isCentroidPin(s);
+function machState(w) {                                // 'done' = every place is an exact point · 'approx' = marked, but not exactly · 'none'
+  const st = stopsOf(w);
+  if (!st.some(s => s.b || s.x != null)) return 'none';
+  return st.every(isExact) ? 'done' : 'approx';
+}
+const workDone = w => machState(w) === 'done';        // the job is optional
+function coordText(s, lang) {
+  if (!s || s.x == null || !SITE) return '';
+  const [la, lo] = toWgs(s.x, s.y);
+  return lang === 'en' ? `${la.toFixed(5)} N, ${lo.toFixed(5)} E` : `${la.toFixed(5).replace('.', ',')} É, ${lo.toFixed(5).replace('.', ',')} K`;
+}
+const mapsLink = s => { if (!s || s.x == null) return ''; const [la, lo] = toWgs(s.x, s.y); return `https://www.google.com/maps?q=${la.toFixed(6)},${lo.toFixed(6)}`; };
 const markSym = w => workDone(w) ? '\u2713' : stopsOf(w).length ? '\u25D0' : '\u25CB';   // ✓ done · ◐ started · ○ nothing
 const workOf = (src, mid) => (src && src.work && !emptyWork(src.work[mid])) ? src.work[mid] : null;
 const blockLabel = id => (SITE && SITE.blocks.find(b => b.id === id)?.label) || String(id).replace('-', '/');
@@ -1667,7 +1692,7 @@ function travelOf(date, m, w) {
   const km = legs.reduce((a, l) => a + l.m, 0) / 1000;
   return { legs, km, min: km / speedOf(m) * 60, prev: pv, road: legs.some(l => l.road), line: legs.some(l => !l.road) };
 }
-function travelText(tr, lang) {
+function travelText(tr, lang, compact) {
   if (!tr) return '';
   const out = [];
   if (tr.km >= 0.05) {
@@ -1678,6 +1703,7 @@ function travelText(tr, lang) {
   }
   for (const l of tr.legs.filter(x => x.shuttle)) {
     const rt = (Math.round(l.one * 2 / 100) / 10).toFixed(1);
+    if (compact) { out.push(lang === 'en' ? `⇄ ${placeOne(l.to, 'en')} all day, ${rt} km / round trip` : `⇄ ${placeOne(l.to, 'hu')} egész nap, ${rt.replace('.', ',')} km / forduló`); continue; }
     out.push(lang === 'en' ? `all-day shuttle ${placeOne(l.from, 'en')} \u21C4 ${placeOne(l.to, 'en')}: ${rt} km per round trip`
       : `egész napos ingázás ${placeOne(l.from, 'hu')} \u21C4 ${placeOne(l.to, 'hu')}: ${rt.replace('.', ',')} km / forduló`);
   }
@@ -1812,7 +1838,7 @@ const ZOOM_PIN = 700;                                   // metres across the map
 const shortName = m => m.name.replace(/^4-axle tipper truck/, 'Tipper').replace('Tracked excavator', 'Excavator');
 function centroidOf(b) { const [x, y, w, h] = blockBox(b); return { x: Math.round(x + w / 2), y: Math.round(y + h / 2) }; }
 function isCentroidPin(s) {                             // pins the old block buttons dropped in the middle of a block
-  if (!s || !s.b || s.x == null || !SITE || s.b === 'DEPO') return false;
+  if (!s || !s.b || s.x == null || !SITE) return false;
   const b = SITE.blocks.find(z => z.id === s.b); if (!b) return false;
   const c = centroidOf(b); return Math.abs(c.x - s.x) <= 1 && Math.abs(c.y - s.y) <= 1;
 }
@@ -2000,11 +2026,11 @@ function openWork(mid) {
       snap();
       let i = ed.stops.findIndex(x => x.b === 'DEPO');
       if (i < 0) { i = ed.stops.findIndex((x, k) => k > 0 && stopEmpty(x)); if (i < 0) { ed.stops.push(newStop()); i = ed.stops.length - 1; } }
-      const d = ed.stops[i], c = centroidOf(depo);
-      if (d.x == null || d.b !== 'DEPO') Object.assign(d, { b: 'DEPO', x: c.x, y: c.y });
+      const d = ed.stops[i];
+      if (!(d.b === 'DEPO' && isExact(d))) Object.assign(d, { b: 'DEPO', x: null, y: null });   // the worker puts the exact unloading spot
       delete d.trips; d.shuttle = true;
       if (mach().kind === 'tipper' && !d.acts.includes('depot')) d.acts = [...d.acts, 'depot'];
-      ed.si = i; ed.vb = padVB(boxOf([from, d], 300, 220), 0.25); draw();
+      ed.si = i; ed.vb = padVB(blockBox(depo), 0.06); draw(); toast(t('wDepoPin'));
     };
     if ($('#tShuttle')) $('#tShuttle').onchange = e => { snap(); const s = stop(); delete s.trips; if (e.target.checked) s.shuttle = true; else delete s.shuttle; refresh(); };
     $('#eDel').onclick = () => {                      // delete the selected place (the only one is emptied instead)
@@ -2079,12 +2105,15 @@ function consDoc(c) {
   const groups = consRows(c);
   const lines = (d, m) => Math.max(1, stopsOf(workOf(d, m.id)).length);
   const pages = []; let cur = [], rows = 0;
-  for (const g of groups) { const n = g.ms.reduce((a, m) => a + (lines(g.d, m) > 1 ? 1 + (lines(g.d, m) - 1) * 0.5 : 1), 0);
-    if (rows + n > 20 && cur.length) { pages.push(cur); cur = []; rows = 0; } cur.push(g); rows += n; }
+  const unitsOf = (d, m) => Math.max(1, stopsOf(workOf(d, m.id)).reduce((a, st) => a + (placeOne(st, 'en').length > 22 ? 1.4 : 1), 0));   // long names wrap
+  for (const g of groups) { const n = g.ms.reduce((a, m) => a + unitsOf(g.d, m), 0);
+    if (rows + n > 19 && cur.length) { pages.push(cur); cur = []; rows = 0; } cur.push(g); rows += n; }
   if (cur.length) pages.push(cur);
   const nLeg = (() => { let n = 0; for (const m of S.machines) { const set = new Set(); for (const { d } of groups) for (const st of stopsOf(workOf(d, m.id))) set.add(effB(st) || 'o' + (st.place || '')); n += set.size; } return n; })();
   const legPages = nLeg > 8 ? Math.ceil((nLeg - 8) / 24) : 0;
-  const total = pages.length + 1 + legPages;
+  const markedDays = groups.filter(g => g.ms.some(m => stopsOf(workOf(g.d, m.id)).some(st => st.x != null)));
+  const dayPages = Math.ceil(markedDays.length / 2);
+  const total = pages.length + dayPages + 1 + legPages;
   const docNo = c.custom ? `STL-WC-${(c.calc.to || todayIso()).replace(/-/g, '')}` : `STL-WC-${c.year}-${String(c.no).padStart(3, '0')}`;
   const period = esc(enPeriod(c.calc.from, c.calc.to)) + (c.custom ? '' : c.draft ? ' (draft)' : ` · stage ${c.no}`);
   const head = (n, sub) => `<div class="ch"><div><div class="cb">${esc(P.name.toUpperCase())}</div><h1>DAILY WORK CONSOLIDATION — EQUIPMENT RENTAL</h1><div class="cs">${sub}</div></div>
@@ -2093,17 +2122,18 @@ function consDoc(c) {
   const foot = n => `<div class="cf"><span>${esc(P.name)} · ${esc(P.address.replace(/,\s*Hungary$/i, ''))} \u00b7 Travel: along the site roads of the drawing where they connect, otherwise straight line \u00d7 ${ROAD_F}; at site speed (estimate)${MAP ? ` \u00b7 Map: Sentinel-2 ${esc(MAP.sat.date)} + site drawing` : ''}</span><span>${docNo} · Page ${n} / ${total}</span></div>`;
   const sig = (s, h) => { const v = validSig(s, h); return v ? sigMarkup(v, 62, 18, 'pt', '', 0.8) : '<span class="nosig">—</span>'; };
   const wd = s => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dow(s)];
-  const placeCell = w => { const st = stopsOf(w); return st.length > 1 ? st.map((s, i) => `${i + 1}. ${esc(placeOne(s, 'en'))}`).join('<br>') : esc(placeText(w, 'en')); };
+  const gps = s => s.x != null ? ` <span class="gps">· ${esc(coordText(s, 'en'))}${isExact(s) ? '' : ' (approx.)'}</span>` : '';
+  const placeCell = w => { const st = stopsOf(w); return st.map((s, i) => `${st.length > 1 ? `${i + 1}. ` : ''}${esc(placeOne(s, 'en'))}${gps(s)}`).join('<br>'); };
   const workCell = (m, w) => { const st = stopsOf(w); return st.length > 1 ? st.map((s, i) => `${i + 1}. ${esc(workOne(m, s, 'en') || '—')}`).join('<br>') : esc(workText(m, w, 'en')); };
   let html = pages.map((pg, i) => `<div class="cons-holder"><div class="cons-page${c.draft ? ' draft' : ''}">${head(i + 1, 'Where each machine worked, what it did and how far it moved, day by day')}
-    <table class="ct"><thead><tr><th style="width:22mm">Date</th><th style="width:38mm">Machine</th><th class="c" style="width:12mm">Hours</th><th style="width:44mm">Location</th><th>Work carried out</th><th class="c" style="width:26mm">Travel on site</th><th class="c" style="width:22mm">Contractor</th><th class="c" style="width:22mm">Client</th></tr></thead><tbody>
+    <table class="ct"><thead><tr><th style="width:22mm">Date</th><th style="width:38mm">Machine</th><th class="c" style="width:12mm">Hours</th><th style="width:68mm">Location (GPS, WGS84)</th><th>Work carried out</th><th class="c" style="width:26mm">Travel on site</th><th class="c" style="width:22mm">Contractor</th><th class="c" style="width:22mm">Client</th></tr></thead><tbody>
     ${pg.map(({ d, ms }) => { const h = dayHash(d); return ms.map((m, k) => { const w = workOf(d, m.id), tr = w ? travelOf(d.date, m, w) : null; return `<tr class="${k === 0 ? 'first' : ''}">
       ${k === 0 ? `<td rowspan="${ms.length}" class="dt"><b>${esc(enLong(d.date).replace(/ \d{4}$/, ''))}</b><br><span>${wd(d.date)}${isWeekend(d.date) ? ' · by agreement' : ''}</span></td>` : ''}
       <td><i class="dot" style="background:${MCOL[S.machines.indexOf(m) % MCOL.length]}"></i>${esc(m.name)}</td>
       <td class="c">${fmtDaysEN(Number(d.hours[m.id]))}</td>
       <td>${w ? placeCell(w) : '<span class="miss">not marked</span>'}</td>
       <td>${w ? workCell(m, w) : '<span class="miss">not marked</span>'}</td>
-      <td class="c">${tr && travelText(tr, 'en') ? esc(travelText(tr, 'en')) : '—'}</td>
+      <td class="c">${tr && travelText(tr, 'en') ? esc(travelText(tr, 'en', true)) : '—'}</td>
       ${k === 0 ? `<td rowspan="${ms.length}" class="c sg">${sig(d.sig.contractor, h)}</td><td rowspan="${ms.length}" class="c sg">${sig(d.sig.client, h)}</td>` : ''}</tr>`; }).join(''); }).join('')}
     </tbody></table>${foot(i + 1)}${c.draft ? '<div class="wmk">DRAFT</div>' : ''}</div></div>`).join('');
   // map page: one pin per machine and place (block), zoomed to where work happened
@@ -2126,6 +2156,7 @@ function consDoc(c) {
         const e = byPlace.get(key) || { s, days: [] }; e.days.push(d.date); byPlace.set(key, e);
         let x = s.x, y = s.y, approx = false;
         if (x == null) { const blk = effB(s) && SITE.blocks.find(z => z.id === effB(s)); if (!blk) continue; ({ x, y } = centroidOf(blk)); approx = true; }
+        else if (isCentroidPin(s)) approx = true;
         const c = clusters.find(c => c.approx === approx && Math.hypot(c.x - x, c.y - y) < 20);
         if (c) { c.days.push(d.date); c.n++; c.sx += x; c.sy += y; c.x = c.sx / c.n; c.y = c.sy / c.n; }
         else clusters.push({ x, y, sx: x, sy: y, n: 1, days: [d.date], approx });
@@ -2153,13 +2184,35 @@ function consDoc(c) {
   });
   const thead = '<thead><tr><th>Machine</th><th>Location</th><th class="c">Days</th><th>Dates</th><th class="c">Travel, period</th></tr></thead>';
   const empty = '<tr><td colspan="5" class="miss">No locations marked yet.</td></tr>';
-  html += `<div class="cons-holder"><div class="cons-page map${c.draft ? ' draft' : ''}">${head(pages.length + 1, 'Site plan — where each machine worked')}
+  // daily location sheets: the exact points of every machine, two days per page
+  const dayPanel = g => {
+    const pts = [], rowsH = [];
+    g.ms.forEach(m => {
+      const mi = S.machines.indexOf(m);
+      stopsOf(workOf(g.d, m.id)).forEach((st, i, all) => {
+        if (st.x != null) pts.push({ x: st.x, y: st.y, color: MCOL[mi % MCOL.length], hollow: !isExact(st), label: shortName(m) + (all.length > 1 ? ` ${i + 1}.` : '') });
+        rowsH.push(`<tr><td><i class="dot" style="background:${MCOL[mi % MCOL.length]}"></i>${esc(shortName(m))}${all.length > 1 ? ` ${i + 1}.` : ''}</td><td>${esc(placeOne(st, 'en'))}</td><td>${esc(coordText(st, 'en'))}${st.x != null && !isExact(st) ? ' <span class="miss">approx.</span>' : ''}</td></tr>`);
+      });
+    });
+    let vb = padVB(boxOf(pts, 260, 170), 0.2);
+    const asp = 133 / 70; if (vb[2] / vb[3] < asp) { const w = vb[3] * asp; vb = [vb[0] - (w - vb[2]) / 2, vb[1], w, vb[3]]; } else { const h = vb[2] / asp; vb = [vb[0], vb[1] - (h - vb[3]) / 2, vb[2], h]; }
+    return `<div class="dpanel"><div class="dtitle">${esc(enLong(g.d.date))} \u00b7 ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dow(g.d.date)]}</div>
+      <div class="dmap">${SITE ? siteSVG(vb, { pins: pts, attrs: 'preserveAspectRatio="xMidYMid meet"', pinDiv: 55 }) : ''}</div>
+      <table class="ct dt2"><thead><tr><th>Machine</th><th>Location</th><th>GPS (WGS84)</th></tr></thead><tbody>${rowsH.join('')}</tbody></table></div>`;
+  };
+  for (let k = 0; k < dayPages; k++) {
+    const n = pages.length + 1 + k;
+    html += `<div class="cons-holder"><div class="cons-page map${c.draft ? ' draft' : ''}">${head(n, 'Exact positions, day by day (\u25CF exact point \u00b7 \u25CB approximate)')}
+      <div class="dpanels">${markedDays.slice(2 * k, 2 * k + 2).map(dayPanel).join('')}</div>
+      ${foot(n)}${c.draft ? '<div class="wmk">DRAFT</div>' : ''}</div></div>`;
+  }
+  html += `<div class="cons-holder"><div class="cons-page map${c.draft ? ' draft' : ''}">${head(pages.length + dayPages + 1, 'Site plan \u2014 where each machine worked')}
     <div class="cmap">${SITE ? siteSVG(mvb, { pins, attrs: 'preserveAspectRatio="xMidYMid meet"' }) : ''}</div>
     <div class="note" style="margin:-1mm 0 2mm">● exact place marked on the map · ○ block only (no exact place) · labels: days worked there</div>
     <table class="ct lg">${thead}<tbody>${legend.slice(0, 8).join('') || empty}</tbody></table>
-    ${foot(pages.length + 1)}${c.draft ? '<div class="wmk">DRAFT</div>' : ''}</div></div>`;
+    ${foot(pages.length + dayPages + 1)}${c.draft ? '<div class="wmk">DRAFT</div>' : ''}</div></div>`;
   for (let k = 0; k < legPages; k++) {
-    const n = pages.length + 2 + k;
+    const n = pages.length + dayPages + 2 + k;
     html += `<div class="cons-holder"><div class="cons-page map${c.draft ? ' draft' : ''}">${head(n, 'Site plan — where each machine worked (continued)')}
       <table class="ct lg">${thead}<tbody>${legend.slice(8 + k * 24, 8 + (k + 1) * 24).join('')}</tbody></table>
       ${foot(n)}${c.draft ? '<div class="wmk">DRAFT</div>' : ''}</div></div>`;
@@ -2293,7 +2346,7 @@ function allMarks() {
     const w = workOf(d, m.id), st = stopsOf(w), tr = w ? travelOf(d.date, m, w) : null;
     if (!st.length) { out.push({ d, m, i: -1, s: null }); continue; }
     st.forEach((s, i) => {
-      let x = s.x, y = s.y, exact = s.x != null;
+      let x = s.x, y = s.y, exact = isExact(s);
       if (x == null && effB(s)) ({ x, y } = centroidOf(SITE.blocks.find(b => b.id === effB(s))));
       out.push({ d, m, i, s, x, y, exact, ll: x != null ? toWgs(x, y) : null, tr, w });
     });
@@ -2310,7 +2363,7 @@ function marksCsv() {
     if (!r.s) { rows.push([r.d.date, WD.en[dow(r.d.date)], r.m.name, dec(Number(r.d.hours[r.m.id]), 1), '', 'NOT MARKED', '', '', '', '', '', '', '', '', '', '', '', '', sc, sk].map(q).join(';')); continue; }
     const ll = r.ll;
     rows.push([r.d.date, WD.en[dow(r.d.date)], r.m.name, dec(Number(r.d.hours[r.m.id]), 1), r.i + 1, placeOne(r.s, 'en'), effB(r.s) ? blockLabel(effB(r.s)) : '',
-      r.exact ? 'yes' : (ll ? 'no (block centre)' : 'no'), ll ? dec(ll[0], 6) : '', ll ? dec(ll[1], 6) : '', ll ? `https://www.google.com/maps?q=${ll[0].toFixed(6)},${ll[1].toFixed(6)}` : '',
+      r.exact ? 'yes' : (ll ? 'NO (automatic block centre - needs the exact point)' : 'no'), ll ? dec(ll[0], 6) : '', ll ? dec(ll[1], 6) : '', ll ? `https://www.google.com/maps?q=${ll[0].toFixed(6)},${ll[1].toFixed(6)}` : '',
       r.x != null ? Math.round(r.x + SITE.ox) : '', r.y != null ? Math.round(SITE.h - r.y + SITE.oy) : '',
       workOne(r.m, r.s, 'en'), workOne(r.m, r.s, 'hu'), r.s.note || '', isShuttle(r.s) ? 'yes' : '', r.i === 0 && r.tr ? travelText(r.tr, 'en') : '', sc, sk].map(q).join(';'));
   }
@@ -2388,7 +2441,8 @@ async function openCode() {
 }
 
 /* main data (master.enc): marks merged by the office; fills in what this device does not have yet,
-   never overwrites a mark here and never touches a day that is already signed */
+   updates marks it copied from an earlier version (if not edited here since), replaces approximate
+   marks with exact ones, and never touches a day that is already signed */
 async function loadMaster() {
   try {
     const r = await fetch('master.enc', { cache: 'no-cache' });
@@ -2398,24 +2452,39 @@ async function loadMaster() {
     if (!m || !m.version || !Array.isArray(m.days)) return;
     let seen = ''; try { seen = localStorage.getItem('szihalom-worklog-master') || ''; } catch (e) { }
     if (seen === m.version) return;
-    let added = 0;
+    let added = 0, copies = {};
+    try { copies = JSON.parse(localStorage.getItem('szihalom-worklog-mcopy') || '{}'); } catch (e) { }
+    const wk = w => hashStr(JSON.stringify(stopsOf(w)));
     for (const l of m.lines || []) if (!S.po.lines.some(x => x.id === l.id)) { S.po.lines.push(clone(l)); added++; }
     for (const x of m.machines || []) if (!S.machines.some(y => y.id === x.id)) { S.machines.push(clone(x)); added++; }
     for (const md of m.days) {
       const d = S.days.find(x => x.date === md.date);
-      if (!d) { S.days.push({ date: md.date, start: Number(md.start ?? 7), note: md.note || '', hours: clone(md.hours || {}), sig: clone(md.sig || {}), work: clone(md.work || {}) }); added++; continue; }
+      if (!d) {
+        S.days.push({ date: md.date, start: Number(md.start ?? 7), note: md.note || '', hours: clone(md.hours || {}), sig: clone(md.sig || {}), work: clone(md.work || {}) }); added++;
+        for (const [mid, w] of Object.entries(md.work || {})) copies[md.date + '|' + mid] = wk(w);
+        continue;
+      }
       const h = dayHash(d);
       if (['contractor', 'client'].some(r => sigState(d.sig?.[r], h) === 'ok')) continue;   // signed here: leave it
       for (const [mid, w] of Object.entries(md.work || {})) {
-        if (workOf(d, mid) || emptyWork(w)) continue;
-        d.work ||= {}; d.work[mid] = clone(w);
+        if (emptyWork(w)) continue;
+        const here = workOf(d, mid), key = md.date + '|' + mid;
+        if (here && !emptyWork(here)) {
+          if (wk(here) === wk(w)) { copies[key] = wk(w); continue; }
+          const fromMaster = copies[key] === wk(here);                          // copied earlier, not edited here since
+          const hs = stopsOf(here), ms = stopsOf(w);                            // same places, but the old automatic centre pins now have exact points
+          const better = machState(w) === 'done' && hs.length === ms.length && hs.some(isCentroidPin)
+            && hs.every((s, i) => (s.b || '') === (ms[i].b || '') && (isCentroidPin(s) || (s.x === ms[i].x && s.y === ms[i].y)));
+          if (!fromMaster && !better) continue;
+        }
+        d.work ||= {}; d.work[mid] = clone(w); copies[key] = wk(w);
         if (!(Number(d.hours[mid]) > 0) && Number(md.hours?.[mid]) > 0) d.hours[mid] = Number(md.hours[mid]);
         added++;
       }
       const h2 = dayHash(d);                          // signatures given for exactly this content come along too
       for (const r of ['contractor', 'client']) if (md.sig?.[r] && md.sig[r].hash === h2 && sigState(d.sig?.[r], h2) !== 'ok') { d.sig ||= {}; d.sig[r] = clone(md.sig[r]); added++; }
     }
-    try { localStorage.setItem('szihalom-worklog-master', m.version); } catch (e) { }
+    try { localStorage.setItem('szihalom-worklog-master', m.version); localStorage.setItem('szihalom-worklog-mcopy', JSON.stringify(copies)); } catch (e) { }
     if (added) { sortAll(S); save(); render(); toast(t('masterIn', { n: added })); }
   } catch (e) { console.warn('master', e); }
 }
@@ -2435,7 +2504,7 @@ function renderWork() {
       <div class="wmart">${machineArt(m)}<i class="dot big" style="background:${MCOL[mi % MCOL.length]}"></i></div>
       <div class="wminfo"><b>${esc(m.name)}</b>
         ${!on ? `<div class="muted small">${esc(t('idle'))}</div>`
-          : w ? st.map((s, i) => `<div class="wmplace">\u{1F4CD} ${st.length > 1 ? `${i + 1}. ` : ''}${esc(placeOne(s, S.lang) || '—')}${isCentroidPin(s) || (s.b && s.x == null) ? ` <span class="badge amber">${esc(t('wtApprox'))}</span>` : ''}</div><div class="small">\u{1F6E0} ${esc(workOne(m, s, S.lang) || '—')}</div>`).join('')
+          : w ? st.map((s, i) => `<div class="wmplace">\u{1F4CD} ${st.length > 1 ? `${i + 1}. ` : ''}${esc(placeOne(s, S.lang) || '—')}${isCentroidPin(s) || (s.b && s.x == null) ? ` <span class="badge amber">${esc(t('wtApprox'))}</span>` : ''}</div>${s.x != null ? `<div class="gpsl">${esc(coordText(s, S.lang))} <a href="${mapsLink(s)}" target="_blank" rel="noopener" title="Google Maps">\u{1F5FA}</a></div>` : ''}<div class="small">\u{1F6E0} ${esc(workOne(m, s, S.lang) || '—')}</div>`).join('')
             + (tr ? `<div class="small trv">\u{1F69C} ${esc(tr)}</div>` : '')
           : `<div class="wmplace warnc">${esc(t('wtNotYet'))}</div>`}
       </div>
@@ -2453,11 +2522,11 @@ function renderWork() {
   });
   const vb = pins.length ? padVB(boxOf(pins), 0.3) : fullVB();
   const past = S.days.filter(d => d.date !== sd.date).slice().reverse().map(d => {
-    const ms = S.machines.filter(m => worked(d, m.id)), miss = ms.filter(m => !workDone(workOf(d, m.id))).length;
+    const ms = S.machines.filter(m => worked(d, m.id)), miss = ms.filter(m => machState(workOf(d, m.id)) === 'none').length, apx = ms.filter(m => machState(workOf(d, m.id)) === 'approx').length;
     const mk = markState(d.date);
     return `<button class="hrow mk-${mk}" data-a="workDay" data-v="${d.date}"><span class="hd"><b>${esc(shortDate(d.date))}</b> <span class="muted">${esc(wdName(d.date))}</span></span>
       <span class="hm muted">${ms.map(m => { const w = workOf(d, m.id); return w ? esc(stopsOf(w).map(s => effB(s) ? blockLabel(effB(s)) : s.x != null ? t('wOutside') : '?').join('→')) : '—'; }).join(' · ')}</span>
-      ${mk === 'part' ? `<span class="badge mk-part">${esc(t('wtMissingN', { n: miss }))}</span>` : markBadge(mk)}</button>`;
+      ${mk === 'part' ? `<span class="badge mk-part">${esc([miss ? t('wtMissingN', { n: miss }) : '', apx ? t('wtApproxN', { n: apx }) : ''].filter(Boolean).join(' \u00b7 '))}</span>` : markBadge(mk)}</button>`;
   }).join('');
   const rr = UI.repRange || 'week';
   el.innerHTML = `<div class="card">
