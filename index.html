@@ -185,6 +185,9 @@ body.locked .chrome,body.locked main{display:none}
 .wcard{width:min(720px,100%)}
 .wmap{position:relative;border:1px solid var(--rule);border-radius:12px;overflow:hidden;background:#f3f6ee;margin-top:4px}
 .mapw{height:min(52vh,420px);touch-action:none;overflow:hidden;user-select:none;-webkit-user-select:none;cursor:grab}
+.mapw svg,.mapw svg *{pointer-events:none;-webkit-user-drag:none}
+.mapw:active{cursor:grabbing}
+@media (min-width:900px){.mapw{height:min(60vh,520px)}}
 .mapw.tabmap{height:min(44vh,340px);touch-action:pan-y}
 .mapw .sitemap{display:block;width:100%;height:100%}
 .xhair{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;pointer-events:none;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.5)}
@@ -424,6 +427,7 @@ const UIKEY = 'szihalom-worklog-ui';
 /* ------------------------------------------------------------------ i18n */
 const T = {
   hu: {
+    wHintZoomM: 'Nagyítson rá a gép helyére: egérgörgővel, a + gombbal, vagy kattintson a térképre. Lenyomott egérgombbal húzva mozgatja a térképet.', wHintPinM: 'Kattintson a gép pontos helyére, vagy húzza egérrel a piros jelölőt. A célkereszthez az „Ide” gombbal is leteheti.', wMapHint2M: 'Még nincs jelölő – nagyítson rá, és kattintson a gép helyére.', wPickInBlockM: '{b} kiválasztva – most kattintson a pontos helyre a blokkon belül.',
     mk_done: 'kész', mk_part: 'hiányos', mk_none: 'nincs jelölve',
     wDepoHaul: 'DEPO fuvar', wDepoFirst: 'Előbb jelölje be, honnan szállított (a rakodás helyét), utána nyomja a DEPO fuvar gombot.', wShuttle: 'Egész nap ingázott: {a} \u21C4 {b}', wShuttleHint: 'A fordulókat nem kell számolni – elég, hogy aznap ezen a két hely között fuvarozott.',
     recovered: 'Korábbi adatok visszaállítva ({n} mentés).', recoverNeedPw: 'Félretett régebbi adatok vannak ezen a telefonon. A visszaállításhoz zárja le (🔒), és lépjen be újra a jelszóval.',
@@ -532,6 +536,7 @@ const T = {
     signedBy: '{n}, {d}', dayTot: '{h} gépóra', daysCol: 'Nap',
   },
   en: {
+    wHintZoomM: 'Zoom in on the machine’s place: mouse wheel, +, or click the map. Drag with the mouse button held to move the map.', wHintPinM: 'Click the machine’s exact place, or drag the red pin with the mouse. You can also drop it at the crosshair with “Here”.', wMapHint2M: 'No pin yet — zoom in and click the machine’s place.', wPickInBlockM: '{b} selected — now click the exact place inside the block.',
     mk_done: 'done', mk_part: 'incomplete', mk_none: 'not marked',
     wDepoHaul: 'DEPO haul', wDepoFirst: 'First mark where it loaded, then press DEPO haul.', wShuttle: 'Shuttled all day: {a} \u21C4 {b}', wShuttleHint: 'No need to count the trips — just that it hauled between these two places that day.',
     recovered: 'Earlier data restored ({n} saved set(s)).', recoverNeedPw: 'Older data is kept aside on this phone. To restore it, lock (🔒) and sign in again with the password.',
@@ -1385,6 +1390,8 @@ function actLabel(m, key, lang) {
 const stopEmpty = s => !s || (!s.b && s.x == null && !(s.acts || []).length && !s.note && !s.place);
 const stopsOf = w => !w ? [] : (Array.isArray(w.stops) ? w.stops : [w]).filter(s => !stopEmpty(s));
 const emptyWork = w => stopsOf(w).length === 0;
+const workDone = w => { const st = stopsOf(w); return st.length > 0 && st.every(s => s.b || s.x != null) && st.some(s => (s.acts || []).length || s.note); };
+const markSym = w => workDone(w) ? '\u2713' : stopsOf(w).length ? '\u25D0' : '\u25CB';   // ✓ done · ◐ started · ○ nothing
 const workOf = (src, mid) => (src && src.work && !emptyWork(src.work[mid])) ? src.work[mid] : null;
 function placeOne(s, lang) {
   const where = s.b ? s.b.replace('-', '/') : (s.x != null ? (lang === 'en' ? 'Outside the blocks' : 'Blokkon kívül') : '');
@@ -1690,7 +1697,7 @@ function mapWidget(host, { vb, render, onTap, pinAt, onPinMove, onPinEnd, onView
       st.mode = 'pinch'; st.d0 = Math.hypot(a.x - b.x, a.y - b.y) || 1; st.vb0 = st.vb.slice();
       st.m0 = toMap((a.x + b.x) / 2, (a.y + b.y) / 2);
     }
-    if (e.pointerType !== 'mouse' || st.mode === 'pin') e.preventDefault();
+    e.preventDefault();                                 // no text selection / native image drag with the mouse
   });
   host.addEventListener('pointermove', e => {
     if (!st.ptrs.has(e.pointerId)) return;
@@ -1717,7 +1724,13 @@ function mapWidget(host, { vb, render, onTap, pinAt, onPinMove, onPinEnd, onView
     st.mode = st.ptrs.size ? 'hold' : null;               // one finger left after a pinch: ignore it until lifted
   };
   host.addEventListener('pointerup', end); host.addEventListener('pointercancel', end);
-  host.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.deltaY < 0 ? 1.3 : 1 / 1.3, e.clientX, e.clientY); }, { passive: false });
+  host.addEventListener('wheel', e => {                 // mouse wheel: steps; touchpad: many small deltas (ctrl = pinch)
+    e.preventDefault();
+    const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1);
+    const f = Math.min(2, Math.max(0.5, Math.exp(-dy * (e.ctrlKey ? 0.01 : 0.0022))));
+    zoomAt(f, e.clientX, e.clientY);
+  }, { passive: false });
+  host.addEventListener('dragstart', e => e.preventDefault());
   const api = {
     get vb() { return st.vb.slice(); },
     set: v => setView(v, true), zoomAt, paint,
@@ -1732,6 +1745,8 @@ function zoomButtons(root, api) {
     if (z === 'in') api.zoomAt(2); else if (z === 'out') api.zoomAt(0.5); else api.set(fullVB());
   });
 }
+const FINE = () => window.matchMedia && matchMedia('(pointer: fine)').matches;   // mouse / touchpad
+const tt = (k, v) => t(FINE() && (T[S.lang] || T.en)[k + 'M'] ? k + 'M' : k, v);
 const zoomCtl = () => `<div class="mapzoom"><button type="button" data-z="in" aria-label="+">+</button><button type="button" data-z="out" aria-label="-">−</button><button type="button" data-z="all" aria-label="${esc(t('wFull'))}" title="${esc(t('wFull'))}">⤢</button></div>`;
 
 /* ---- how far a day is marked: 'done' / 'part' / 'none'. live = the machine being edited right now */
@@ -1740,8 +1755,9 @@ function markState(date, live) {
   if (!d) return 'none';
   const ms = S.machines.filter(m => Number(d.hours[m.id]) > 0);
   if (!ms.length) return 'none';
-  const n = ms.filter(m => live && live.mid === m.id ? live.has : !!workOf(d, m.id)).length;
-  return n === 0 ? 'none' : n === ms.length ? 'done' : 'part';
+  const w = m => live && live.mid === m.id ? live.w : workOf(d, m.id);
+  const done = ms.filter(m => workDone(w(m))).length, touched = ms.filter(m => stopsOf(w(m)).length).length;
+  return done === ms.length ? 'done' : touched ? 'part' : 'none';
 }
 const markBadge = st => `<span class="badge mk-${st}">${esc(t('mk_' + st))}</span>`;
 
@@ -1814,19 +1830,19 @@ function openWork(mid) {
   const selHtml = () => {
     const s = stop();
     if (s.x != null) return isCentroidPin(s) ? `<span class="warnc">⚠ ${esc(t('wCentroid'))}</span>` : `✓ ${esc(t('wSelected', { b: `${ed.si + 1}. ${placeOne(s, S.lang) || t('wOutside')}` }))}`;
-    if (s.b) return `<span class="warnc">${esc(t('wPickInBlock', { b: s.b.replace('-', '/') }))}</span>`;
-    return `<span class="muted">${esc(t('wMapHint2'))}</span>`;
+    if (s.b) return `<span class="warnc">${esc(tt('wPickInBlock', { b: s.b.replace('-', '/') }))}</span>`;
+    return `<span class="muted">${esc(tt('wMapHint2'))}</span>`;
   };
   const travelHtml = () => {
     const m = mach(), tr = travelOf(curDay().date, m, { stops: ed.stops });
     const km = v => (Math.round(v / 100) / 10).toFixed(1).replace('.', S.lang === 'en' ? '.' : ',');
     return travelText(tr, S.lang) ? `<div class="travel">\u{1F69C} ${esc(t('wTravel'))}: <b>${esc(travelText(tr, S.lang))}</b><div class="small muted">${esc(t(tr.road && !tr.line ? 'wTravelRoad' : tr.road ? 'wTravelMixed' : 'wTravelNote', { v: speedOf(m), f: String(ROAD_F).replace('.', S.lang === 'en' ? '.' : ',') }))}${tr.legs.some(l => l.prev) ? ' ' + esc(t('wTravelPrev')) : ''}</div></div>` : '';
   };
-  const liveMark = () => ({ mid: ed.mid, has: ed.stops.some(x => !stopEmpty(x)) });
+  const liveMark = () => ({ mid: ed.mid, w: { stops: ed.stops } });
   const updateDayChip = () => {
     const c = md.querySelector(`#eDays .chip[data-d="${curDay().date}"]`);
     if (c) c.className = `chip dchip st-${markState(curDay().date, liveMark())} on`;
-    const mp = md.querySelector(`.mp[data-m="${ed.mid}"] i`); if (mp) mp.textContent = liveMark().has ? '\u2713' : '\u25CB';
+    const mp = md.querySelector(`.mp[data-m="${ed.mid}"] i`); if (mp) mp.textContent = markSym({ stops: ed.stops });
   };
   const refresh = () => {                              // after a pin or block change: no full redraw (keeps the view and the scroll)
     updateDayChip();
@@ -1841,7 +1857,7 @@ function openWork(mid) {
     const near = vb[2] <= ZOOM_PIN;
     const x = $('#wX'); if (x) x.hidden = !near;
     const pb = $('#wPinHere'); if (pb) pb.disabled = !near;
-    const h = $('#wHint'); if (h) h.textContent = t(near ? 'wHintPin' : 'wHintZoom');
+    const h = $('#wHint'); if (h) h.textContent = tt(near ? 'wHintPin' : 'wHintZoom');
   };
   const placePin = p => { const s = stop(), b = blockAt(p.x, p.y); s.x = Math.round(p.x); s.y = Math.round(p.y); s.b = b ? b.id : ''; delete s.gps; };
   const draw = () => {
@@ -1855,8 +1871,8 @@ function openWork(mid) {
         <label class="chip chipdate">\u{1F4C5}<input type="date" id="eDate" value="${sd.date}" aria-label="${esc(t('otherDay'))}"></label></div>
       <div class="mklegend"><span class="st-done"></span>${esc(t('mk_done'))}<span class="st-part"></span>${esc(t('mk_part'))}<span class="st-none"></span>${esc(t('mk_none'))}</div>
       <div class="k" style="margin-top:12px">② ${esc(t('wStepMachine'))}</div>
-      <div class="mpick scrollx">${S.machines.map(x => { const on = Number(sd.hours[x.id]) > 0, done = !!workOf(src, x.id);
-        return `<button type="button" class="mp${x.id === ed.mid ? ' on' : ''}${on ? '' : ' idle'}" data-m="${esc(x.id)}">${machineArt(x)}<span>${esc(x.name)}</span><i>${on ? (done ? '✓' : '○') : esc(t('idle'))}</i></button>`; }).join('')}
+      <div class="mpick scrollx">${S.machines.map(x => { const on = Number(sd.hours[x.id]) > 0, sym = markSym(x.id === ed.mid ? { stops: ed.stops } : workOf(src, x.id));
+        return `<button type="button" class="mp${x.id === ed.mid ? ' on' : ''}${on ? '' : ' idle'}" data-m="${esc(x.id)}">${machineArt(x)}<span>${esc(x.name)}</span><i>${on ? sym : esc(t('idle'))}</i></button>`; }).join('')}
         <button type="button" class="mp addm" id="eNewM"><span class="plus">+</span><span>${esc(t('amTitle'))}</span></button></div>
       ${!workingNow ? `<div class="alert warn small" style="margin-top:10px">${esc(t('wNotWorking'))}<div style="margin-top:8px"><button class="btn primary" id="eWorkOn">✓ ${esc(t('wWorkedOn', { h: baseH() }))}</button></div></div>` : `
       <div class="k" style="margin-top:12px">③ ${esc(t('wStepWhere'))}</div>
@@ -1911,7 +1927,7 @@ function openWork(mid) {
     $('#wNext').onclick = () => go(() => {
       const sd = curDay(), src = srcOf(), list = S.machines.filter(x => Number(sd.hours[x.id]) > 0);
       const i = list.findIndex(x => x.id === ed.mid);
-      const next = list.slice(i + 1).concat(list.slice(0, i)).find(x => !workOf(src, x.id)) || list[(i + 1) % list.length];
+      const next = list.slice(i + 1).concat(list.slice(0, i)).find(x => !workDone(workOf(src, x.id))) || list[(i + 1) % list.length];
       if (!next || next.id === ed.mid) { toast(t('wAllDone')); return; }
       ed.mid = next.id; load();
     });
@@ -1962,7 +1978,7 @@ function openWork(mid) {
   md.hidden = false; document.body.style.overflow = 'hidden';
   if (!ed.mid || Number(curDay().hours[ed.mid]) <= 0) {
     const sd = curDay(), src = srcOf(), list = S.machines.filter(x => Number(sd.hours[x.id]) > 0);
-    ed.mid = (list.find(x => !workOf(src, x.id)) || list[0] || S.machines[0]).id;
+    ed.mid = (list.find(x => !workDone(workOf(src, x.id))) || list[0] || S.machines[0]).id;
   }
   load(); draw();
 }
@@ -2136,11 +2152,11 @@ function renderDays() {
         <span class="tstate">${on ? '✓ ' + esc(t('worked')) : '✕ ' + esc(t('idle'))}</span>
       </button>
       ${on ? `<div class="tstep"><button data-a="stepH" data-m="${esc(m.id)}" data-v="-0.5" aria-label="-">−</button><b>${fmtNum(h)} ${esc(t('hoursLbl'))}</b><button data-a="stepH" data-m="${esc(m.id)}" data-v="0.5" aria-label="+">+</button></div>` : ''}
-      ${on && SITE ? (() => { const w = workOf(entry || UI.draft, m.id); return `<button class="twork ${w ? 'set' : 'need'}" data-a="workM" data-m="${esc(m.id)}">${w ? `\u{1F4CD} ${esc(placeText(w, S.lang) || '—')}<small>${esc(workText(m, w, S.lang) || '—')}</small>` : `\u{1F4CD} ${esc(t('workBtn'))}`}</button>`; })() : ''}
+      ${on && SITE ? (() => { const w = workOf(entry || UI.draft, m.id); return `<button class="twork ${workDone(w) ? 'set' : 'need'}" data-a="workM" data-m="${esc(m.id)}">${w ? `\u{1F4CD} ${esc(placeText(w, S.lang) || '—')}<small>${esc(workText(m, w, S.lang) || '—')}</small>` : `\u{1F4CD} ${esc(t('workBtn'))}`}</button>`; })() : ''}
     </div>`;
   }).join('') + `<button class="tile add" data-a="addMachine">+ ${esc(t('amTitle'))}</button>`;
   let action;
-  const unmarked = SITE && S.machines.some(m => Number(hours[m.id]) > 0 && !workOf(entry || UI.draft, m.id));
+  const unmarked = SITE && S.machines.some(m => Number(hours[m.id]) > 0 && !workDone(workOf(entry || UI.draft, m.id)));
   if (!entry) action = `<button class="btn huge green" data-a="saveDay">✓ ${esc(t('saveDay'))}</button><p class="hint">${esc(t('notSaved'))}</p>`;
   else if (bothSigned(entry)) action = `<div class="done">\u2713 ${esc(t('doneSigned'))}</div>
       <button class="btn huge" data-a="shareOffice" style="margin-bottom:8px">\u{1F4E4} ${esc(t('shareBtn'))}</button>
@@ -2190,11 +2206,11 @@ function renderWork() {
   const sd = selDay(), src = sd.entry || UI.draft;
   const isToday = sd.date === todayIso();
   const working = S.machines.filter(m => Number(sd.hours[m.id]) > 0);
-  const missing = working.filter(m => !workOf(src, m.id)).length;
+  const missing = working.filter(m => !workDone(workOf(src, m.id))).length;
   const cards = S.machines.map((m, mi) => {
     const on = Number(sd.hours[m.id]) > 0, w = workOf(src, m.id), tr = w ? travelText(travelOf(sd.date, m, w), S.lang) : '';
     const st = stopsOf(w);
-    return `<div class="wcardm${on ? '' : ' off'}${on && !w ? ' need' : ''}">
+    return `<div class="wcardm${on ? '' : ' off'}${on && !workDone(w) ? ' need' : ''}">
       <div class="wmart">${machineArt(m)}<i class="dot big" style="background:${MCOL[mi % MCOL.length]}"></i></div>
       <div class="wminfo"><b>${esc(m.name)}</b>
         ${!on ? `<div class="muted small">${esc(t('idle'))}</div>`
@@ -2215,7 +2231,7 @@ function renderWork() {
   });
   const vb = pins.length ? padVB(boxOf(pins), 0.3) : fullVB();
   const past = S.days.filter(d => d.date !== sd.date).slice().reverse().map(d => {
-    const ms = S.machines.filter(m => worked(d, m.id)), miss = ms.filter(m => !workOf(d, m.id)).length;
+    const ms = S.machines.filter(m => worked(d, m.id)), miss = ms.filter(m => !workDone(workOf(d, m.id))).length;
     const mk = markState(d.date);
     return `<button class="hrow mk-${mk}" data-a="workDay" data-v="${d.date}"><span class="hd"><b>${esc(shortDate(d.date))}</b> <span class="muted">${esc(wdName(d.date))}</span></span>
       <span class="hm muted">${ms.map(m => { const w = workOf(d, m.id); return w ? esc(stopsOf(w).map(s => s.b ? s.b.replace('-', '/') : s.x != null ? t('wOutside') : '?').join('→')) : '—'; }).join(' · ')}</span>
@@ -2279,7 +2295,7 @@ function workStatusBox() {
   let need = 0, done = 0; const missing = [];
   for (const d of S.days) {
     const ms = S.machines.filter(m => worked(d, m.id));
-    const miss = ms.filter(m => !workOf(d, m.id));
+    const miss = ms.filter(m => !workDone(workOf(d, m.id)));
     need += ms.length; done += ms.length - miss.length;
     if (miss.length) missing.push({ d, n: miss.length });
   }
