@@ -441,7 +441,7 @@ const UIKEY = 'szihalom-worklog-ui';
 /* ------------------------------------------------------------------ i18n */
 const T = {
   hu: {
-    wDepoPin: 'Kattintson a DEPO-n a lerakás pontos helyére.', wtApproxN: '{n} pontosítandó',
+    wtApproxN: '{n} pontosítandó',
     expTitle: 'Minden jelölés exportálása', expIntro: 'Kód: a teljes jelölés (helyek, munkák, órák, aláírások) titkosítva – küldje el, ebből frissül a központi adat. Excel: minden pont GPS-koordinátával és Google Maps linkkel. Google Earth: minden pont a térképen.', expCode: 'Kód (küldéshez)', expCsv: 'Excel – minden pont', expKml: 'Google Earth (KML)', codeTitle: 'Jelölések kódja', codeIntro: '{n} jelölés, {d} nap. Másolja ki, és küldje el (e-mail, üzenet). Jelszó nélkül nem olvasható.', codeLen: '{k} ezer karakter', codeCopy: 'Másolás', codeDown: 'Letöltés (.txt)', codeCopied: 'A kód a vágólapon – illessze be az üzenetbe.', close: 'Bezárás', masterIn: 'Központi adatok átvéve: {n} új tétel.',
     wUndo: 'Visszavonás', wDelPlace: '{n}. hely törlése', wClearMachine: 'A(z) {m} összes jelölésének törlése erről a napról', wClearConfirm: 'Törli a(z) {m} összes hely- és munkajelölését ({d})?', wDeleted: 'Törölve – a Visszavonás gombbal visszahozható.', wDeletedTab: 'Törölve.', wNothingUndo: 'Nincs mit visszavonni.', wtClear: 'Jelölés törlése',
     wHintZoomM: 'Nagyítson rá a gép helyére: egérgörgővel, a + gombbal, vagy kattintson a térképre. Lenyomott egérgombbal húzva mozgatja a térképet.', wHintPinM: 'Kattintson a gép pontos helyére, vagy húzza egérrel a piros jelölőt. A célkereszthez az „Ide” gombbal is leteheti.', wMapHint2M: 'Még nincs jelölő – nagyítson rá, és kattintson a gép helyére.', wPickInBlockM: '{b} kiválasztva – most kattintson a pontos helyre a blokkon belül.',
@@ -553,7 +553,7 @@ const T = {
     signedBy: '{n}, {d}', dayTot: '{h} gépóra', daysCol: 'Nap',
   },
   en: {
-    wDepoPin: 'Click the exact unloading spot inside the DEPO.', wtApproxN: '{n} need exact point',
+    wtApproxN: '{n} need exact point',
     expTitle: 'Export every mark', expIntro: 'Code: all marks (places, jobs, hours, signatures), encrypted — send it and the main data is updated from it. Excel: every point with GPS and a Google Maps link. Google Earth: every point on the map.', expCode: 'Code (to send)', expCsv: 'Excel – every point', expKml: 'Google Earth (KML)', codeTitle: 'Marks code', codeIntro: '{n} marks, {d} days. Copy it and send it (e-mail, message). Unreadable without the password.', codeLen: '{k} thousand characters', codeCopy: 'Copy', codeDown: 'Download (.txt)', codeCopied: 'The code is on the clipboard — paste it into your message.', close: 'Close', masterIn: 'Main data taken over: {n} new items.',
     wUndo: 'Undo', wDelPlace: 'Delete place {n}', wClearMachine: 'Delete all marks of {m} for this day', wClearConfirm: 'Delete all place and work marks of {m} ({d})?', wDeleted: 'Deleted — Undo brings it back.', wDeletedTab: 'Deleted.', wNothingUndo: 'Nothing to undo.', wtClear: 'Delete marks',
     wHintZoomM: 'Zoom in on the machine’s place: mouse wheel, +, or click the map. Drag with the mouse button held to move the map.', wHintPinM: 'Click the machine’s exact place, or drag the red pin with the mouse. You can also drop it at the crosshair with “Here”.', wMapHint2M: 'No pin yet — zoom in and click the machine’s place.', wPickInBlockM: '{b} selected — now click the exact place inside the block.',
@@ -1838,7 +1838,7 @@ const ZOOM_PIN = 700;                                   // metres across the map
 const shortName = m => m.name.replace(/^4-axle tipper truck/, 'Tipper').replace('Tracked excavator', 'Excavator');
 function centroidOf(b) { const [x, y, w, h] = blockBox(b); return { x: Math.round(x + w / 2), y: Math.round(y + h / 2) }; }
 function isCentroidPin(s) {                             // pins the old block buttons dropped in the middle of a block
-  if (!s || !s.b || s.x == null || !SITE) return false;
+  if (!s || !s.b || s.x == null || !SITE || s.b === 'DEPO') return false;   // DEPO = the trucks' destination, its middle is fine
   const b = SITE.blocks.find(z => z.id === s.b); if (!b) return false;
   const c = centroidOf(b); return Math.abs(c.x - s.x) <= 1 && Math.abs(c.y - s.y) <= 1;
 }
@@ -2026,11 +2026,11 @@ function openWork(mid) {
       snap();
       let i = ed.stops.findIndex(x => x.b === 'DEPO');
       if (i < 0) { i = ed.stops.findIndex((x, k) => k > 0 && stopEmpty(x)); if (i < 0) { ed.stops.push(newStop()); i = ed.stops.length - 1; } }
-      const d = ed.stops[i];
-      if (!(d.b === 'DEPO' && isExact(d))) Object.assign(d, { b: 'DEPO', x: null, y: null });   // the worker puts the exact unloading spot
+      const d = ed.stops[i], c = centroidOf(depo);
+      if (d.x == null || d.b !== 'DEPO') Object.assign(d, { b: 'DEPO', x: c.x, y: c.y });
       delete d.trips; d.shuttle = true;
       if (mach().kind === 'tipper' && !d.acts.includes('depot')) d.acts = [...d.acts, 'depot'];
-      ed.si = i; ed.vb = padVB(blockBox(depo), 0.06); draw(); toast(t('wDepoPin'));
+      ed.si = i; ed.vb = padVB(boxOf([from, d], 300, 220), 0.25); draw();
     };
     if ($('#tShuttle')) $('#tShuttle').onchange = e => { snap(); const s = stop(); delete s.trips; if (e.target.checked) s.shuttle = true; else delete s.shuttle; refresh(); };
     $('#eDel').onclick = () => {                      // delete the selected place (the only one is emptied instead)
